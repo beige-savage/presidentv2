@@ -1,0 +1,2376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정치외교학과에서 대통령까지</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+    min-height: 100vh;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transition: background 0.5s ease;
+  }
+
+  /* ── 상단 헤더 ── */
+  #header {
+    background: #161b22;
+    border-bottom: 2px solid #30363d;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+    gap: 12px;
+  }
+  #header .title { font-size: 15px; font-weight: bold; color: #e6edf3; letter-spacing: 0.5px; }
+  #stage-badge {
+    background: #1f6feb;
+    color: #fff;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 16px;
+    border-radius: 20px;
+    letter-spacing: 1px;
+    box-shadow: 0 2px 8px rgba(31, 111, 235, 0.3);
+    white-space: nowrap;
+  }
+  #turn-info { font-size: 14px; color: #8b949e; white-space: nowrap; }
+  #turn-info span { color: #f0c04c; font-weight: bold; font-size: 16px; }
+
+  /* 포기 버튼 */
+  #giveup-btn {
+    background: rgba(218, 54, 51, 0.15);
+    border: 1px solid rgba(218, 54, 51, 0.45);
+    color: #ff7b72;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-family: inherit;
+    white-space: nowrap;
+    margin-left: auto;
+  }
+  #giveup-btn:hover {
+    background: #da3633;
+    border-color: #f85149;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(218, 54, 51, 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* ── 메인 ── */
+  #main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
+
+  /* ── 좌측 능력치 패널 ── */
+  #stats-panel {
+    width: 220px;
+    background: rgba(22, 27, 34, 0.85);
+    backdrop-filter: blur(8px);
+    border-right: 2px solid #30363d;
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+  #stats-panel h3 {
+    font-size: 12px; color: #8b949e; letter-spacing: 2px;
+    text-transform: uppercase; border-bottom: 1px solid #30363d; padding-bottom: 8px;
+  }
+  .stat-item { display: flex; flex-direction: column; gap: 6px; }
+  .stat-label { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
+  .stat-name { display: flex; align-items: center; gap: 6px; }
+  .stat-emoji { font-size: 15px; }
+  .stat-value { font-size: 13px; font-weight: bold; color: #f0c04c; min-width: 28px; text-align: right; }
+  .stat-bar-bg { background: #21262d; border-radius: 4px; height: 8px; overflow: hidden; }
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
+  .bar-학식  { background: linear-gradient(90deg, #388bfd, #79c0ff); }
+  .bar-인맥  { background: linear-gradient(90deg, #a371f7, #d2a8ff); }
+  .bar-연설력 { background: linear-gradient(90deg, #3fb950, #7ee787); }
+  .bar-여론  { background: linear-gradient(90deg, #f78166, #ffa198); }
+  .bar-체력  { background: linear-gradient(90deg, #f0c04c, #ffd700); }
+
+  /* ── 정치 성향 스탯 전용 바 (진보 vs 보수) ── */
+  .ideology-box {
+    margin-top: 4px;
+    padding-top: 10px;
+    border-top: 1px dashed #30363d;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ideology-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: bold;
+  }
+  .ideology-title {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #e6edf3;
+  }
+  .ideology-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+  }
+  .badge-prog { background: rgba(56, 139, 253, 0.25); color: #79c0ff; border: 1px solid #388bfd; }
+  .badge-cons { background: rgba(248, 81, 73, 0.25); color: #ff7b72; border: 1px solid #f85149; }
+  .ideology-bar-bg {
+    background: #1f242c;
+    border-radius: 6px;
+    height: 12px;
+    position: relative;
+    overflow: hidden;
+    border: 1px solid #30363d;
+    display: flex;
+  }
+  /* 좌측 진보(블루), 우측 보수(레드) */
+  .ideology-track-prog {
+    height: 100%;
+    background: linear-gradient(90deg, #1f6feb, #58a6ff);
+    transition: width 0.3s ease;
+  }
+  .ideology-track-cons {
+    height: 100%;
+    background: linear-gradient(90deg, #ff7b72, #da3633);
+    transition: width 0.3s ease;
+  }
+  .ideology-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8b949e;
+  }
+  .label-prog { color: #58a6ff; }
+  .label-cons { color: #ff7b72; }
+
+  /* ── 중앙 게임 영역 ── */
+  #game-area {
+    flex: 1; display: flex; flex-direction: column;
+    padding: 24px 30px; gap: 18px; overflow: hidden;
+    min-height: 0;
+  }
+
+  /* 상황 설명 */
+  #situation-box {
+    flex: 1; background: rgba(22, 27, 34, 0.9);
+    backdrop-filter: blur(8px);
+    border: 1px solid #30363d;
+    border-radius: 12px; padding: 22px 26px;
+    display: flex; flex-direction: column; gap: 14px; overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+  .event-tag { font-size: 12px; font-weight: 600; letter-spacing: 1px; color: #8b949e; }
+  #situation-text { font-size: 15px; line-height: 1.85; color: #c9d1d9; flex: 1; }
+
+  /* 결과 델타 표시 */
+  .result-block {
+    background: #0d1117; border: 1px solid #30363d; border-radius: 8px;
+    padding: 12px 16px; display: flex; flex-direction: column; gap: 6px;
+  }
+  .result-title { font-size: 12px; color: #8b949e; letter-spacing: 1px; }
+  .delta-list { display: flex; gap: 10px; flex-wrap: wrap; }
+  .delta-pos { color: #3fb950; font-weight: bold; font-size: 13px; }
+  .delta-neg { color: #f78166; font-weight: bold; font-size: 13px; }
+  .forced-rest-msg {
+    color: #f0c04c; font-size: 13px; border-top: 1px solid #21262d;
+    padding-top: 8px; margin-top: 2px;
+  }
+
+  .hint { font-size: 12px; color: #484f58; border-top: 1px solid #21262d; padding-top: 12px; }
+
+  /* ── 단계별 배경색 구분 ── */
+  body.stage-0 { background: #0c1424; } /* 학부생: 풋풋한 네이비 블루 */
+  body.stage-1 { background: #091f24; } /* 외교관 후보자: 지적인 청록빛 틸 */
+  body.stage-2 { background: #13172e; } /* 보좌관: 묵직한 딥 인디고 */
+  body.stage-3 { background: #1f112e; } /* 국회의원: 중후하고 품격 있는 보라 */
+  body.stage-4 { background: #280e22; } /* 당대표: 권위 있는 딥 와인 버건디 */
+  body.stage-5 { background: #2e0f0f; } /* 대선 후보: 긴장감 넘치는 딥 크림슨 */
+  body.stage-6 { background: #2b1f07; } /* 대통령: 영예롭고 웅장한 골드 브라운 */
+
+  /* 진급 심사 모드 */
+  #choices.exam-mode .choice-btn:first-child { border-color: #3fb95077; background: #0e2013; }
+  #choices.exam-mode .choice-btn:first-child:hover {
+    border-color: #3fb950; background: #14301d;
+    box-shadow: 0 4px 16px rgba(63, 185, 80, 0.3);
+    transform: translateY(-2px);
+  }
+  #choices.exam-mode .choice-btn:last-child { border-color: #f7816677; background: #221214; }
+  #choices.exam-mode .choice-btn:last-child:hover {
+    border-color: #f78166; background: #32181c;
+    box-shadow: 0 4px 16px rgba(247, 129, 102, 0.3);
+    transform: translateY(-2px);
+  }
+  .exam-banner {
+    background: #142813; border: 1px solid #3fb95088;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; font-weight: bold; color: #3fb950; letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(63, 185, 80, 0.2);
+  }
+  .promote-msg { color: #3fb950; font-weight: bold; font-size: 15px; }
+  .demote-msg  { color: #f78166; font-weight: bold; font-size: 14px; }
+
+  /* 이벤트 모드 */
+  #event-tag.is-event { color: #f0c04c; }
+  .event-banner {
+    background: #2d1f00; border: 1px solid #f0c04c88;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; font-weight: bold; color: #f0c04c; letter-spacing: 1px;
+    box-shadow: 0 2px 10px rgba(240, 192, 76, 0.2);
+  }
+  #choices.event-mode .choice-btn { border-color: #f0c04c55; }
+  #choices.event-mode .choice-btn:hover {
+    border-color: #f0c04c;
+    background: #2a1e08;
+    box-shadow: 0 4px 16px rgba(240, 192, 76, 0.25);
+    transform: translateY(-2px);
+  }
+
+  /* ── 선택지 버튼 & hover 효과 ── */
+  #choices { display: flex; gap: 12px; flex-shrink: 0; }
+  .choice-btn {
+    flex: 1; background: #161b22; border: 1px solid #30363d;
+    border-radius: 10px; padding: 16px 14px; color: #e6edf3;
+    font-family: inherit; font-size: 14px; line-height: 1.6;
+    cursor: pointer; text-align: left;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column; gap: 8px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  }
+  .choice-btn:hover {
+    border-color: #58a6ff;
+    background: #1c2738;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(31, 111, 235, 0.28);
+    color: #ffffff;
+  }
+  .choice-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  .choice-btn:disabled {
+    opacity: 0.4; cursor: not-allowed;
+    transform: none; box-shadow: none;
+  }
+  .choice-num { font-size: 11px; color: #8b949e; letter-spacing: 1px; font-weight: 600; }
+  .choice-text { font-size: 14px; color: #c9d1d9; font-weight: 500; }
+  .choice-btn:hover .choice-text { color: #ffffff; }
+  .choice-effect { font-size: 12px; color: #8b949e; margin-top: auto; }
+  .choice-btn:hover .choice-effect { color: #a5d6ff; }
+
+  /* ── 상황 설명 텍스트 바로 아래 이벤트 도트 씬 일러스트 ── */
+  .event-scene-display {
+    width: 100%;
+    min-height: 140px;
+    background: #090e17;
+    border: 2px solid #30363d;
+    border-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.8), 0 4px 14px rgba(0, 0, 0, 0.3);
+  }
+  /* 저해상도 모자이크 / 스캔라인 오버레이 (원래 이미지의 해상도를 약간 낮춘 느낌) */
+  .event-scene-display::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.25) 0px, rgba(0, 0, 0, 0.25) 2px, transparent 2px, transparent 4px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.15) 0px, rgba(0, 0, 0, 0.15) 2px, transparent 2px, transparent 4px);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .pixel-scene-graphic {
+    width: 100%;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    border-radius: 6px;
+    overflow: hidden;
+    image-rendering: pixelated;
+  }
+  .pixel-scene-caption {
+    margin-top: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #8b949e;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── 씬별 다운스케일 픽셀아트 그래픽 (세미나, 의회, 토론 등) ── */
+  .scene-seminar {
+    background:
+      radial-gradient(circle at 50% 25%, #f0c04c55 0%, transparent 60%),
+      linear-gradient(180deg, #162438 0%, #0d1522 65%, #2a1d15 65%, #3d291e 100%);
+  }
+  .scene-seminar::before {
+    content: '📚 🎓 🏛️ 📝 💡';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+    transform: scale(1.1);
+  }
+
+  .scene-assembly {
+    background:
+      radial-gradient(circle at 50% 15%, #58a6ff66 0%, transparent 70%),
+      linear-gradient(180deg, #0f1c2e 0%, #172b47 50%, #202b38 50%, #111720 100%);
+  }
+  .scene-assembly::before {
+    content: '🏛️ ⚖️ 🇰🇷 📜 🎙️';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+
+  .scene-debate {
+    background:
+      linear-gradient(90deg, #da363344 0%, transparent 35%, transparent 65%, #1f6feb44 100%),
+      linear-gradient(180deg, #1a1528 0%, #0c0816 70%, #211933 100%);
+  }
+  .scene-debate::before {
+    content: '📺 🎙️ ⚡ 📢 📹';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+
+  .scene-diplomacy {
+    background:
+      radial-gradient(circle at 50% 30%, #3fb95044 0%, transparent 70%),
+      linear-gradient(180deg, #091f24 0%, #061518 70%, #152d2a 100%);
+  }
+  .scene-diplomacy::before {
+    content: '🌐 ✈️ 🤝 🌍 💼';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+
+  .scene-election {
+    background:
+      radial-gradient(circle at 50% 20%, #f0c04c44 0%, transparent 60%),
+      linear-gradient(180deg, #2b1f14 0%, #140e08 70%, #301f11 100%);
+  }
+  .scene-election::before {
+    content: '🗳️ 🚩 📣 👥 🏆';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+
+  .scene-party {
+    background:
+      linear-gradient(90deg, #388bfd33 0%, #ff7b7233 100%),
+      linear-gradient(180deg, #1f112e 0%, #0c0614 70%, #29143d 100%);
+  }
+  .scene-party::before {
+    content: '🎖️ 🏛️ 🤝 📢 🚩';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+
+  .scene-general {
+    background:
+      radial-gradient(circle at 50% 25%, #3fb95033 0%, transparent 60%),
+      linear-gradient(180deg, #102416 0%, #08140c 70%, #1b3823 100%);
+  }
+  .scene-general::before {
+    content: '🌳 🏃 💪 ☕ ☀️';
+    font-size: 32px;
+    letter-spacing: 16px;
+    filter: drop-shadow(0 4px 0 #000) blur(0.6px);
+  }
+  .dot-scene-card {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: #0d131f;
+    border: 2px solid #30363d;
+    border-radius: 12px;
+    padding: 14px 18px;
+    box-shadow: inset 0 0 0 1px #161b22, 0 4px 16px rgba(0, 0, 0, 0.45);
+    position: relative;
+    overflow: hidden;
+  }
+  .dot-scene-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top left, rgba(56, 139, 253, 0.12), transparent 70%);
+    pointer-events: none;
+  }
+  /* 캐릭터 도트 프레임 (대폭 확대: 88px x 88px + 저해상도 레트로 필터) */
+  .dot-char-frame {
+    width: 88px;
+    height: 88px;
+    background: #151d2a;
+    border: 2px solid #48546b;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7), 0 2px 8px rgba(0,0,0,0.4);
+    overflow: hidden;
+  }
+  /* 원래 해상도를 약간 낮춘 듯한 레트로 스캔라인 및 픽셀 격자 오버레이 */
+  .dot-char-frame::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.28) 0px, rgba(0, 0, 0, 0.28) 2px, transparent 2px, transparent 4px),
+      repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0px, rgba(0, 0, 0, 0.18) 2px, transparent 2px, transparent 4px);
+    pointer-events: none;
+    border-radius: 8px;
+    z-index: 2;
+  }
+  /* 순수 CSS 픽셀아트 캐릭터 (scale 2.2배로 큼직하게 확대) */
+  .pixel-sprite {
+    width: 4px;
+    height: 4px;
+    position: absolute;
+    top: 8px;
+    left: 24px;
+    transform: scale(2.2);
+    transform-origin: top left;
+    image-rendering: pixelated;
+    animation: dotBob 2s steps(2) infinite;
+  }
+  @keyframes dotBob {
+    0%, 100% { transform: scale(2.2) translateY(0); }
+    50% { transform: scale(2.2) translateY(-1px); }
+  }
+
+  /* 이벤트 전용 도트 아트 프레임 */
+  .event-dot-frame {
+    width: 80px;
+    height: 80px;
+    background: #111824;
+    border: 2px solid #388bfd55;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 139, 253, 0.15);
+  }
+  .event-dot-art {
+    width: 4px;
+    height: 4px;
+    position: relative;
+    transform: scale(2.2);
+    transform-origin: center;
+    image-rendering: pixelated;
+    margin-bottom: 8px;
+  }
+  .event-dot-tag {
+    font-size: 10px;
+    font-weight: 700;
+    color: #8b949e;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* ── 이벤트별 CSS 픽셀아트 도트 ── */
+  /* 1. 세미나/책 (학술, 스터디) */
+  .art-seminar {
+    box-shadow:
+      /* 책 표지 및 책장 도트 */
+      -8px -6px #388bfd, -4px -6px #388bfd, 0 -6px #f0c04c, 4px -6px #388bfd, 8px -6px #388bfd,
+      -8px -2px #ffffff, -4px -2px #21262d, 0 -2px #f0c04c, 4px -2px #21262d, 8px -2px #ffffff,
+      -8px 2px #ffffff, -4px 2px #21262d, 0 2px #f0c04c, 4px 2px #21262d, 8px 2px #ffffff,
+      -8px 6px #388bfd, -4px 6px #388bfd, 0 6px #f0c04c, 4px 6px #388bfd, 8px 6px #388bfd,
+      /* 깃펜 픽셀 */
+      6px -10px #f0c04c, 8px -12px #ffffff;
+  }
+  /* 2. 외교/지구본 (모의UN, 국제외교) */
+  .art-un {
+    box-shadow:
+      -4px -8px #2ea043, 0 -8px #2ea043, 4px -8px #2ea043,
+      -8px -4px #2ea043, -4px -4px #388bfd, 0 -4px #2ea043, 4px -4px #388bfd, 8px -4px #2ea043,
+      -8px 0 #2ea043, -4px 0 #388bfd, 0 0 #388bfd, 4px 0 #2ea043, 8px 0 #388bfd,
+      -8px 4px #2ea043, -4px 4px #2ea043, 0 4px #388bfd, 4px 4px #2ea043, 8px 4px #2ea043,
+      -4px 8px #2ea043, 0 8px #2ea043, 4px 8px #2ea043,
+      0 12px #8b949e, -4px 14px #8b949e, 0 14px #8b949e, 4px 14px #8b949e;
+  }
+  /* 3. 언론/기사/마이크 (학보사, 라디오, 인터뷰) */
+  .art-press {
+    box-shadow:
+      -2px -8px #f0c04c, 2px -8px #f0c04c,
+      -4px -4px #c9d1d9, 0 -4px #f0c04c, 4px -4px #c9d1d9,
+      -4px 0 #c9d1d9, 0 0 #f0c04c, 4px 0 #c9d1d9,
+      -2px 4px #8b949e, 2px 4px #8b949e,
+      0 8px #30363d, 0 12px #30363d,
+      -4px 14px #58a6ff, 0 14px #58a6ff, 4px 14px #58a6ff;
+  }
+  /* 4. 선거/투표함 (선거운동, 학생회장, 총선) */
+  .art-election {
+    box-shadow:
+      /* 투표용지 투입 */
+      -2px -10px #ffffff, 2px -10px #ffffff,
+      -2px -6px #da3633, 2px -6px #ffffff,
+      /* 투표함 몸통 */
+      -8px -2px #f0c04c, -4px -2px #21262d, 0 -2px #21262d, 4px -2px #21262d, 8px -2px #f0c04c,
+      -8px 2px #f0c04c, -4px 2px #f0c04c, 0 2px #da3633, 4px 2px #f0c04c, 8px 2px #f0c04c,
+      -8px 6px #f0c04c, -4px 6px #f0c04c, 0 6px #f0c04c, 4px 6px #f0c04c, 8px 6px #f0c04c;
+  }
+  /* 5. 국회/국정감사 (의회, 감사, 법안) */
+  .art-audit {
+    box-shadow:
+      0 -10px #ffd700,
+      -4px -6px #58a6ff, 0 -6px #ffd700, 4px -6px #58a6ff,
+      -8px -2px #c9d1d9, -4px -2px #c9d1d9, 0 -2px #c9d1d9, 4px -2px #c9d1d9, 8px -2px #c9d1d9,
+      -8px 2px #c9d1d9, -4px 2px #1f6feb, 0 2px #c9d1d9, 4px 2px #1f6feb, 8px 2px #c9d1d9,
+      -8px 6px #c9d1d9, -4px 6px #1f6feb, 0 6px #c9d1d9, 4px 6px #1f6feb, 8px 6px #c9d1d9,
+      -10px 10px #8b949e, 0 10px #8b949e, 10px 10px #8b949e;
+  }
+  /* 6. TV토론/방송 (대선토론, 당대표토론) */
+  .art-debate {
+    box-shadow:
+      -6px -8px #da3633, 0 -8px #ffffff, 6px -8px #1f6feb,
+      -8px -4px #21262d, -4px -4px #58a6ff, 0 -4px #f0c04c, 4px -4px #ff7b72, 8px -4px #21262d,
+      -8px 0 #21262d, -4px 0 #58a6ff, 0 0 #f0c04c, 4px 0 #ff7b72, 8px 0 #21262d,
+      -6px 4px #21262d, 0 4px #8b949e, 6px 4px #21262d,
+      -4px 8px #f0c04c, 0 8px #f0c04c, 4px 8px #f0c04c,
+      -6px 12px #8b949e, 0 12px #8b949e, 6px 12px #8b949e;
+  }
+  /* 7. 대선 캠프/단일화 (빅텐트, 승리) */
+  .art-camp {
+    box-shadow:
+      0 -10px #ffd700, -2px -6px #ff0054, 2px -6px #1f6feb,
+      -6px -2px #ffd700, -2px -2px #ffffff, 2px -2px #ffffff, 6px -2px #ffd700,
+      -8px 2px #ffd700, -4px 2px #ffd29d, 0 2px #ffffff, 4px 2px #ffd29d, 8px 2px #ffd700,
+      -6px 6px #388bfd, -2px 6px #ffd29d, 2px 6px #ffd29d, 6px 6px #da3633,
+      -4px 10px #388bfd, 0 10px #f0c04c, 4px 10px #da3633;
+  }
+  /* 8. 일반 활동/운동/휴식 */
+  .art-general {
+    box-shadow:
+      -4px -8px #f0c04c, 0 -8px #f0c04c, 4px -8px #f0c04c,
+      -6px -4px #f0c04c, -2px -4px #ffffff, 2px -4px #ffffff, 6px -4px #f0c04c,
+      -6px 0 #f0c04c, -2px 0 #1a1a1a, 2px 0 #1a1a1a, 6px 0 #f0c04c,
+      -4px 4px #f0c04c, 0 4px #e28a76, 4px 4px #f0c04c,
+      -2px 8px #3fb950, 2px 8px #3fb950,
+      -6px 12px #3fb950, 0 12px #3fb950, 6px 12px #3fb950;
+  }
+    /* 기본 도트 캐릭터 box-shadow (머리, 얼굴, 눈, 옷) */
+    box-shadow:
+      /* 1행: 머리 */
+      4px 0 #2c1a0e, 8px 0 #2c1a0e, 12px 0 #2c1a0e,
+      /* 2행: 머리 윗부분 */
+      0 4px #2c1a0e, 4px 4px #4a2d18, 8px 4px #4a2d18, 12px 4px #4a2d18, 16px 4px #2c1a0e,
+      /* 3행: 앞머리 */
+      0 8px #2c1a0e, 4px 8px #4a2d18, 8px 8px #ffd29d, 12px 8px #4a2d18, 16px 8px #2c1a0e,
+      /* 4행: 이마 */
+      0 12px #2c1a0e, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #2c1a0e,
+      /* 5행: 눈 */
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      /* 6행: 볼 & 입 */
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      /* 7행: 목/칼라 */
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      /* 8행: 어깨/옷 */
+      0 28px #1f6feb, 4px 28px #ffffff, 8px 28px #e63946, 12px 28px #ffffff, 16px 28px #1f6feb,
+      /* 9행: 정장 몸통 */
+      0 32px #1f6feb, 4px 32px #1f6feb, 8px 32px #e63946, 12px 32px #1f6feb, 16px 32px #1f6feb;
+  }
+  /* 단계별 도트 캐릭터 복장/색상 */
+  .stage-0 .pixel-sprite { /* 학부생: 파란 후드티와 캐주얼 */
+    box-shadow:
+      4px 0 #2c1a0e, 8px 0 #2c1a0e, 12px 0 #2c1a0e,
+      0 4px #2c1a0e, 4px 4px #4a2d18, 8px 4px #4a2d18, 12px 4px #4a2d18, 16px 4px #2c1a0e,
+      0 8px #2c1a0e, 4px 8px #4a2d18, 8px 8px #ffd29d, 12px 8px #4a2d18, 16px 8px #2c1a0e,
+      0 12px #2c1a0e, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #2c1a0e,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffd29d, 12px 24px #ffd29d,
+      0 28px #238636, 4px 28px #238636, 8px 28px #ffffff, 12px 28px #238636, 16px 28px #238636,
+      0 32px #238636, 4px 32px #238636, 8px 32px #238636, 12px 32px #238636, 16px 32px #238636;
+  }
+  .stage-1 .pixel-sprite { /* 외교관 후보자: 단정한 셔츠와 타이 */
+    box-shadow:
+      4px 0 #1b263b, 8px 0 #1b263b, 12px 0 #1b263b,
+      0 4px #1b263b, 4px 4px #273b5a, 8px 4px #273b5a, 12px 4px #273b5a, 16px 4px #1b263b,
+      0 8px #1b263b, 4px 8px #273b5a, 8px 8px #ffd29d, 12px 8px #273b5a, 16px 8px #1b263b,
+      0 12px #1b263b, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1b263b,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #0d6e6e, 4px 28px #ffffff, 8px 28px #00b4d8, 12px 28px #ffffff, 16px 28px #0d6e6e,
+      0 32px #0d6e6e, 4px 32px #0d6e6e, 8px 32px #00b4d8, 12px 32px #0d6e6e, 16px 32px #0d6e6e;
+  }
+  .stage-2 .pixel-sprite { /* 보좌관: 네이비 정장 + 서류 가방 */
+    box-shadow:
+      4px 0 #1a1a1a, 8px 0 #1a1a1a, 12px 0 #1a1a1a,
+      0 4px #1a1a1a, 4px 4px #333333, 8px 4px #333333, 12px 4px #333333, 16px 4px #1a1a1a,
+      0 8px #1a1a1a, 4px 8px #333333, 8px 8px #ffd29d, 12px 8px #333333, 16px 8px #1a1a1a,
+      0 12px #1a1a1a, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1a1a1a,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #1c2b4a, 4px 28px #ffffff, 8px 28px #e63946, 12px 28px #ffffff, 16px 28px #1c2b4a,
+      0 32px #1c2b4a, 4px 32px #1c2b4a, 8px 32px #e63946, 12px 32px #1c2b4a, 16px 32px #1c2b4a;
+  }
+  .stage-3 .pixel-sprite { /* 국회의원: 짙은 차콜 정장 + 금배지 */
+    box-shadow:
+      4px 0 #1a1a1a, 8px 0 #1a1a1a, 12px 0 #1a1a1a,
+      0 4px #1a1a1a, 4px 4px #2b2b2b, 8px 4px #2b2b2b, 12px 4px #2b2b2b, 16px 4px #1a1a1a,
+      0 8px #1a1a1a, 4px 8px #2b2b2b, 8px 8px #ffd29d, 12px 8px #2b2b2b, 16px 8px #1a1a1a,
+      0 12px #1a1a1a, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1a1a1a,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #26163b, 4px 28px #ffd700, 8px 28px #9d4edd, 12px 28px #ffffff, 16px 28px #26163b,
+      0 32px #26163b, 4px 32px #26163b, 8px 32px #9d4edd, 12px 32px #26163b, 16px 32px #26163b;
+  }
+  .stage-4 .pixel-sprite { /* 당대표: 위엄 있는 딥 버건디 정장 */
+    box-shadow:
+      4px 0 #1a1a1a, 8px 0 #1a1a1a, 12px 0 #1a1a1a,
+      0 4px #1a1a1a, 4px 4px #2b2b2b, 8px 4px #2b2b2b, 12px 4px #2b2b2b, 16px 4px #1a1a1a,
+      0 8px #1a1a1a, 4px 8px #2b2b2b, 8px 8px #ffd29d, 12px 8px #2b2b2b, 16px 8px #1a1a1a,
+      0 12px #1a1a1a, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1a1a1a,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #3b102c, 4px 28px #ffd700, 8px 28px #ff0054, 12px 28px #ffffff, 16px 28px #3b102c,
+      0 32px #3b102c, 4px 32px #3b102c, 8px 32px #ff0054, 12px 32px #3b102c, 16px 32px #3b102c;
+  }
+  .stage-5 .pixel-sprite { /* 대선 후보: 붉은 열정 넥타이 + 후보 띠 */
+    box-shadow:
+      4px 0 #1a1a1a, 8px 0 #1a1a1a, 12px 0 #1a1a1a,
+      0 4px #1a1a1a, 4px 4px #2b2b2b, 8px 4px #2b2b2b, 12px 4px #2b2b2b, 16px 4px #1a1a1a,
+      0 8px #1a1a1a, 4px 8px #2b2b2b, 8px 8px #ffd29d, 12px 8px #2b2b2b, 16px 8px #1a1a1a,
+      0 12px #1a1a1a, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1a1a1a,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #d90429, 4px 28px #ffffff, 8px 28px #ffd700, 12px 28px #ffffff, 16px 28px #1c1c1c,
+      0 32px #d90429, 4px 32px #1c1c1c, 8px 32px #ffd700, 12px 32px #1c1c1c, 16px 32px #1c1c1c;
+  }
+  .stage-6 .pixel-sprite { /* 대통령: 황금 엠블럼 + 태극 블루 로열 정장 */
+    box-shadow:
+      4px 0 #3b280a, 8px 0 #ffd700, 12px 0 #3b280a,
+      0 4px #3b280a, 4px 4px #2b2b2b, 8px 4px #ffd700, 12px 4px #2b2b2b, 16px 4px #3b280a,
+      0 8px #1a1a1a, 4px 8px #2b2b2b, 8px 8px #ffd29d, 12px 8px #2b2b2b, 16px 8px #1a1a1a,
+      0 12px #1a1a1a, 4px 12px #ffd29d, 8px 12px #ffd29d, 12px 12px #ffd29d, 16px 12px #1a1a1a,
+      0 16px #ffd29d, 4px 16px #1a1a1a, 8px 16px #ffd29d, 12px 16px #1a1a1a, 16px 16px #ffd29d,
+      0 20px #ffd29d, 4px 20px #ffd29d, 8px 20px #e28a76, 12px 20px #ffd29d, 16px 20px #ffd29d,
+      4px 24px #ffd29d, 8px 24px #ffffff, 12px 24px #ffd29d,
+      0 28px #1c2b4a, 4px 28px #ffd700, 8px 28px #3a86ff, 12px 28px #ffd700, 16px 28px #1c2b4a,
+      0 32px #1c2b4a, 4px 32px #1c2b4a, 8px 32px #3a86ff, 12px 32px #1c2b4a, 16px 32px #1c2b4a;
+  }
+
+  .dot-char-mood {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    font-size: 16px;
+    background: #0d1117;
+    border: 1px solid #414b5d;
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: floatMood 2s ease-in-out infinite;
+  }
+  @keyframes floatMood {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .dot-scene-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .dot-scene-role {
+    font-size: 13px;
+    font-weight: bold;
+    color: #f0c04c;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .dot-scene-status {
+    font-size: 12px;
+    color: #8b949e;
+    line-height: 1.4;
+  }
+
+  /* ── 시간 경과 프로그레스 바 연출 ── */
+  #time-progress-wrap {
+    display: none;
+    background: #111722;
+    border: 1px solid #388bfd66;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 4px 16px rgba(31, 111, 235, 0.2);
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .time-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .time-progress-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #79c0ff;
+  }
+  .time-progress-pct {
+    color: #f0c04c;
+    font-family: monospace;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  .time-progress-track {
+    background: #21262d;
+    height: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .time-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #1f6feb, #58a6ff, #f0c04c);
+    border-radius: 6px;
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.5);
+    transition: width 0.05s linear;
+  }
+
+  /* ── 하단 ── */
+  #footer {
+    background: #161b22; border-top: 1px solid #30363d;
+    padding: 8px 24px; font-size: 12px; color: #8b949e;
+    display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
+  }
+
+  /* ── 플레이어 이름 입력 모달 ── */
+  #name-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 1000;
+    align-items: center; justify-content: center;
+    background: rgba(4, 8, 15, 0.92);
+    backdrop-filter: blur(8px);
+    padding: 16px;
+  }
+  #name-modal.show { display: flex; }
+  .name-modal-box {
+    background: #161b22;
+    border: 2px solid #388bfd;
+    border-radius: 16px;
+    padding: 36px 32px;
+    max-width: 440px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    box-shadow: 0 0 32px rgba(56, 139, 253, 0.35);
+    animation: fadeIn 0.25s ease;
+  }
+  .name-modal-emblem { font-size: 48px; }
+  .name-modal-title { font-size: 20px; font-weight: bold; color: #f0c04c; }
+  .name-modal-desc { font-size: 13px; color: #8b949e; line-height: 1.6; }
+  .name-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+  .name-input-group label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #c9d1d9;
+  }
+  #player-name-input {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: #ffffff;
+    font-size: 16px;
+    font-family: inherit;
+    font-weight: bold;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  #player-name-input:focus {
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(56, 139, 253, 0.3);
+  }
+  .name-modal-start-btn {
+    background: #1f6feb;
+    color: #fff;
+    border: 1px solid #388bfd;
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(31, 111, 235, 0.3);
+  }
+  .name-modal-start-btn:hover {
+    background: #388bfd;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(31, 111, 235, 0.5);
+  }
+
+  /* ── 포기 확인 모달 ── */
+  #giveup-modal {
+    display: none;
+    position: fixed; inset: 0; z-index: 1000;
+    align-items: center; justify-content: center;
+    background: rgba(4, 8, 15, 0.92);
+    backdrop-filter: blur(8px);
+    padding: 16px;
+  }
+  #giveup-modal.show { display: flex; }
+  .giveup-modal-box {
+    background: #161b22;
+    border: 2px solid #da3633;
+    border-radius: 16px;
+    padding: 32px 28px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0 0 32px rgba(218, 54, 51, 0.4);
+    animation: fadeIn 0.25s ease;
+  }
+  .giveup-modal-icon { font-size: 44px; }
+  .giveup-modal-title { font-size: 20px; font-weight: bold; color: #ff7b72; }
+  .giveup-modal-desc { font-size: 13px; color: #8b949e; line-height: 1.6; }
+  .giveup-modal-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+  }
+  .giveup-confirm-btn {
+    flex: 1;
+    background: #da3633;
+    color: #fff;
+    border: 1px solid #f85149;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: bold;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .giveup-confirm-btn:hover {
+    background: #b62324;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(218, 54, 51, 0.4);
+  }
+  .giveup-cancel-btn {
+    flex: 1;
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .giveup-cancel-btn:hover {
+    background: #30363d;
+    color: #fff;
+  }
+
+  /* ── 엔딩 오버레이 ── */
+  #ending-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 999;
+    align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, 0.88);
+    backdrop-filter: blur(4px);
+    padding: 16px;
+  }
+  #ending-overlay.show { display: flex; }
+  #ending-box {
+    background: #161b22; border: 2px solid #30363d;
+    border-radius: 16px; padding: 36px 40px;
+    max-width: 500px; width: 100%; text-align: center;
+    display: flex; flex-direction: column; gap: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  }
+  #ending-overlay.win  #ending-box { border-color: #f0c04c; box-shadow: 0 0 30px rgba(240, 192, 76, 0.3); }
+  #ending-overlay.lose #ending-box { border-color: #f78166; box-shadow: 0 0 30px rgba(247, 129, 102, 0.3); }
+  .ending-emoji { font-size: 54px; }
+  .ending-title { font-size: 22px; font-weight: bold; }
+  #ending-overlay.win  .ending-title { color: #f0c04c; }
+  #ending-overlay.lose .ending-title { color: #f78166; }
+  .ending-body { font-size: 14px; color: #c9d1d9; line-height: 1.8; }
+  .ending-stat-grid {
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    gap: 8px; margin: 4px 0;
+  }
+  .ending-stat-cell {
+    background: #0d1117; border-radius: 8px; padding: 8px 4px;
+    font-size: 12px; color: #8b949e; display: flex;
+    flex-direction: column; align-items: center; gap: 4px;
+    border: 1px solid #21262d;
+  }
+  .ending-stat-cell strong { color: #f0c04c; font-size: 15px; }
+  .ending-best { font-size: 13px; color: #3fb950; font-weight: 600; }
+  #restart-btn {
+    background: #1f6feb; color: #fff; border: 1px solid #388bfd;
+    border-radius: 8px; padding: 12px 32px; font-size: 15px;
+    font-family: inherit; cursor: pointer; font-weight: bold;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(31, 111, 235, 0.3);
+  }
+  #restart-btn:hover {
+    background: #388bfd;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(31, 111, 235, 0.5);
+  }
+  #restart-btn:active {
+    transform: translateY(0);
+  }
+  #best-record { font-size: 12px; color: #8b949e; }
+  #best-record span { color: #3fb950; font-weight: bold; }
+
+  /* ── 모바일 반응형 (세로 화면) ── */
+  @media (max-width: 768px) {
+    body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+    }
+
+    #header {
+      padding: 10px 14px;
+      flex-wrap: wrap;
+    }
+    #header .title {
+      font-size: 13px;
+      width: 100%;
+      margin-bottom: 2px;
+    }
+    #stage-badge {
+      font-size: 12px;
+      padding: 3px 12px;
+    }
+    #turn-info {
+      font-size: 13px;
+    }
+
+    #main {
+      flex-direction: column;
+      height: auto;
+      overflow: visible;
+      flex: none;
+    }
+
+    #stats-panel {
+      width: 100%;
+      border-right: none;
+      border-bottom: 2px solid #30363d;
+      padding: 12px 14px;
+      gap: 10px;
+      overflow: visible;
+    }
+    #stats-panel h3 {
+      display: none;
+    }
+    #stats-panel .stat-item {
+      gap: 4px;
+    }
+    /* 모바일에서 능력치 막대들을 2열 또는 가로 플렉스로 효율적 배치 */
+    #stats-panel {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px 12px;
+    }
+    #stats-panel .stat-item:last-child {
+      grid-column: span 2;
+    }
+
+    #game-area {
+      padding: 14px;
+      gap: 12px;
+      overflow: visible;
+      height: auto;
+      flex: none;
+    }
+
+    #situation-box {
+      padding: 16px;
+      min-height: 180px;
+      overflow: visible;
+    }
+    #situation-text {
+      font-size: 14px;
+      line-height: 1.7;
+    }
+
+    #choices {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .choice-btn {
+      padding: 12px 14px;
+      gap: 4px;
+    }
+    .choice-text {
+      font-size: 13px;
+    }
+    .choice-effect {
+      font-size: 11px;
+    }
+
+    #footer {
+      padding: 10px 14px;
+      flex-direction: column;
+      gap: 6px;
+      text-align: center;
+    }
+
+    #ending-box {
+      padding: 24px 20px;
+      gap: 14px;
+    }
+    .ending-title {
+      font-size: 18px;
+    }
+    .ending-stat-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- 상단 헤더 -->
+<div id="header">
+  <div class="title">🏛️ <span id="header-name">김정치</span>의 대권 도전기</div>
+  <div id="stage-badge">📚 학부생</div>
+  <div id="turn-info">턴 <span id="turn-num">1</span></div>
+</div>
+
+<!-- 메인 -->
+<div id="main">
+
+  <!-- 좌측 능력치 -->
+  <div id="stats-panel">
+    <h3>능력치</h3>
+    <div class="stat-item">
+      <div class="stat-label">
+        <div class="stat-name"><span class="stat-emoji">📖</span> 학식</div>
+        <div class="stat-value" id="val-학식">20</div>
+      </div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill bar-학식" id="bar-학식" style="width:20%"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">
+        <div class="stat-name"><span class="stat-emoji">🤝</span> 인맥</div>
+        <div class="stat-value" id="val-인맥">20</div>
+      </div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill bar-인맥" id="bar-인맥" style="width:20%"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">
+        <div class="stat-name"><span class="stat-emoji">🎤</span> 연설력</div>
+        <div class="stat-value" id="val-연설력">20</div>
+      </div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill bar-연설력" id="bar-연설력" style="width:20%"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">
+        <div class="stat-name"><span class="stat-emoji">📣</span> 여론</div>
+        <div class="stat-value" id="val-여론">20</div>
+      </div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill bar-여론" id="bar-여론" style="width:20%"></div></div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-label">
+        <div class="stat-name"><span class="stat-emoji">💪</span> 체력</div>
+        <div class="stat-value" id="val-체력">20</div>
+      </div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill bar-체력" id="bar-체력" style="width:20%"></div></div>
+    </div>
+
+    <!-- 성향 스탯 전용 바 -->
+    <div class="ideology-box">
+      <div class="ideology-header">
+        <div class="ideology-title">⚖️ 정치 성향</div>
+        <div class="ideology-badge badge-prog" id="badge-성향">진보 10%</div>
+      </div>
+      <div class="ideology-bar-bg">
+        <div class="ideology-track-prog" id="track-prog" style="width: 55%;"></div>
+        <div class="ideology-track-cons" id="track-cons" style="width: 45%;"></div>
+      </div>
+      <div class="ideology-labels">
+        <span class="label-prog">◀ 진보</span>
+        <span class="label-cons">보수 ▶</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 중앙 게임 영역 -->
+  <div id="game-area">
+    <div id="situation-box">
+      <!-- 도트 캐릭터 프로필 카드 -->
+      <div class="dot-scene-card" id="dot-scene-card">
+        <div class="dot-char-frame">
+          <div class="pixel-sprite" id="pixel-sprite"></div>
+          <div class="dot-char-mood" id="dot-mood">💭</div>
+        </div>
+        <div class="dot-scene-info">
+          <div class="dot-scene-role" id="dot-role">📚 한빛대 정치외교학과 신입생</div>
+          <div class="dot-scene-status" id="dot-status">강의실 맨 앞줄에 앉아 첫 정치학 개론 수업을 기다립니다.</div>
+        </div>
+      </div>
+
+      <!-- 시간 경과 프로그레스 바 연출 -->
+      <div id="time-progress-wrap">
+        <div class="time-progress-header">
+          <span class="time-progress-title"><span id="time-icon">⏳</span> <span id="time-label">행동을 전개하는 중...</span></span>
+          <span class="time-progress-pct" id="time-pct">0%</span>
+        </div>
+        <div class="time-progress-track">
+          <div class="time-progress-fill" id="time-fill"></div>
+        </div>
+      </div>
+
+      <div class="event-tag" id="event-tag">📅 1턴 — 입학</div>
+      <div id="situation-text"></div>
+
+      <!-- 이벤트 내용 텍스트 바로 밑에 출력되는 저해상도 도트 씬 일러스트 -->
+      <div id="event-scene-display" class="event-scene-display">
+        <div class="pixel-scene-graphic scene-seminar" id="scene-graphic"></div>
+        <div class="pixel-scene-caption" id="scene-caption">📚 [학술 세미나] 조민국 교수 연구실</div>
+      </div>
+
+      <div id="result-area"></div>
+      <div class="hint">💡 정당 주최/소속 활동은 정치 성향에 직접적인 영향을 줍니다.</div>
+    </div>
+    <div id="choices"></div>
+  </div>
+</div>
+
+<!-- 하단 -->
+<div id="footer">
+  <span>한빛대학교 정치외교학과</span>
+  <span id="best-record">🏆 최고기록: <span id="best-turn">-</span></span>
+  <span>⚠️ 모든 정당·인물은 가상입니다</span>
+</div>
+
+<!-- 플레이어 이름 입력 모달 -->
+<div id="name-modal">
+  <div class="name-modal-box">
+    <div class="name-modal-emblem">🇰🇷</div>
+    <div class="name-modal-title">대한민국 제21대 대권 도전기</div>
+    <div class="name-modal-desc">
+      정치외교학과 신입생에서 시작해 대통령이 되기 위한 여정입니다.<br>
+      앞으로 대한민국 정치를 이끌어갈 당신의 이름을 입력하세요.
+    </div>
+    <div class="name-input-group">
+      <label for="player-name-input">👤 정치가 성명</label>
+      <input type="text" id="player-name-input" maxlength="8" value="김정치" placeholder="성명을 입력하세요">
+    </div>
+    <button class="name-modal-start-btn" onclick="submitPlayerName()">🏛️ 정계 입문 (게임 시작)</button>
+  </div>
+</div>
+
+<!-- 엔딩 오버레이 -->
+<div id="ending-overlay">
+  <div id="ending-box">
+    <div class="ending-emoji" id="ending-emoji">🎉</div>
+    <div class="ending-title" id="ending-title"></div>
+    <div class="ending-body" id="ending-body"></div>
+    <div class="ending-stat-grid" id="ending-stats"></div>
+    <div class="ending-best" id="ending-best-msg"></div>
+    <button id="restart-btn" onclick="restartGame()">🔄 다시 시작</button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// 진급 단계 정의
+// ═══════════════════════════════════════
+const STAGES = [
+  { name: '학부생',      minTurn:  5, statSum: 130, threshold: 140 },
+  { name: '외교관 후보자', minTurn: 10, statSum: 180, threshold: 195 },
+  { name: '보좌관',      minTurn: 15, statSum: 230, threshold: 250 },
+  { name: '국회의원',    minTurn: 20, statSum: 285, threshold: 305 },
+  { name: '당대표',      minTurn: 25, statSum: 340, threshold: 360 },
+  { name: '대선 후보',   minTurn: 30, statSum: 390, threshold: 408 },
+  { name: '대통령',      minTurn: 99, statSum: 999, threshold: 999 },
+];
+
+// ═══════════════════════════════════════
+// 이벤트 데이터 (dotType / dotTag 및 성향 스탯 변동 포함)
+// 성향: 음수 = 진보 치우침, 양수 = 보수 치우침
+// ═══════════════════════════════════════
+const EVENTS = [
+  // ── 학부생 ──
+  {
+    stage: '학부생',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '📚 [학술 연구] 조민국 교수 연구실',
+    text: '⚗️ 외교안보연구소 소장이자 학과 주임교수인 조민국 교수가 개인 면담을 요청했다. 교수님이 서류철을 건네며 제안한다. "자네, 이번 방학에 나와 함께 국가 전략 정책 리포트를 공동 집필해보지 않겠나?"',
+    choices: [
+      { label: '수락한다 — 밤을 새워 국책 전략 분석 연구에 전념한다', effects: [{ stat: '학식', delta: 12 }, { stat: '체력', delta: -8 }] },
+      { label: '정중히 사양하고 학점 관리와 개인 수련에 집중한다', effects: [{ stat: '학식', delta: 6 }, { stat: '체력', delta: 6 }] },
+    ],
+  },
+  {
+    stage: '학부생',
+    sceneClass: 'scene-party',
+    sceneCaption: '🎖️ [정당 강연] 여의도 청년 정치 콘서트',
+    text: '🎤 이번 주말 각 정당 청년위원회가 주최하는 정책 특강이 열렸다. 「민생개혁당」 유시환 고문의 시민민주주의 특강과 「자유미래당」 이준호 대표의 자유주의 혁신 특강 중 한 곳을 청강하기로 했다.',
+    choices: [
+      { label: '「민생개혁당」 주최 유시환 고문의 개혁 시민정치 특강에 참석한다', effects: [{ stat: '연설력', delta: 11 }, { stat: '인맥', delta: 7 }, { stat: '성향', delta: -10 }] },
+      { label: '「자유미래당」 주최 이준호 대표의 자유주의 시장경제 특강에 참석한다', effects: [{ stat: '학식', delta: 10 }, { stat: '인맥', delta: 8 }, { stat: '성향', delta: 10 }] },
+    ],
+  },
+  {
+    stage: '학부생',
+    sceneClass: 'scene-diplomacy',
+    sceneCaption: '🌐 [다자 외교] 전국 대학생 모의 UN 총회',
+    text: '🌍 전국 대학생 모의 UN 총회 대표단 모집 공고가 떴다. 안보리 결의안을 다루는 핵심 위원회에 우리 학교 정외과 대표로 설 수 있는 절호의 기회다.',
+    choices: [
+      { label: '인도적 지원과 평화 중재 중심의 결의안 작성을 주도한다', effects: [{ stat: '연설력', delta: 12 }, { stat: '인맥', delta: 8 }, { stat: '체력', delta: -6 }] },
+      { label: '국제법 판례와 군사 안보 제재 조항을 치밀하게 분석해 방어한다', effects: [{ stat: '학식', delta: 12 }, { stat: '연설력', delta: 7 }, { stat: '체력', delta: -5 }] },
+    ],
+  },
+  {
+    stage: '학부생',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '📰 [학보사] 교내 언론사 편집실',
+    text: '📰 학보사 1면에 실린 노민현 전 대통령의 화합 정치에 관한 내 기고문이 교내 커뮤니티에서 뜨거운 반향을 일으켰다. 학생들 사이에서 열띤 찬반 토론이 이어진다.',
+    choices: [
+      { label: '후속 반론을 기고하며 논리적으로 학내 여론을 설득한다', effects: [{ stat: '여론', delta: 10 }, { stat: '학식', delta: 6 }] },
+      { label: '교내 공개 정책 좌담회를 개최해 동료 학우들과 직접 소통한다', effects: [{ stat: '연설력', delta: 9 }, { stat: '인맥', delta: 7 }] },
+    ],
+  },
+  {
+    stage: '학부생',
+    sceneClass: 'scene-party',
+    sceneCaption: '💼 [정당 싱크탱크] 여의도 당사 정책실',
+    text: '💼 여의도 주요 정당 싱크탱크에서 청년 인턴을 선발했다. 「민생개혁당」 정책위 이재혁 의원실과 「자유미래당」 여의도연구원 한동건 연구위원실 양측 모두에서 최종 합격 연락이 왔다.',
+    choices: [
+      { label: '「민생개혁당」 이재혁 의원실에 합류해 서민 기본복지 입법을 지원한다', effects: [{ stat: '여론', delta: 11 }, { stat: '인맥', delta: 7 }, { stat: '성향', delta: -12 }] },
+      { label: '「자유미래당」 한동건 위원실에 합류해 규제 혁신 정책을 연구한다', effects: [{ stat: '학식', delta: 11 }, { stat: '인맥', delta: 7 }, { stat: '성향', delta: 12 }] },
+    ],
+  },
+  {
+    stage: '학부생',
+    sceneClass: 'scene-debate',
+    sceneCaption: '🎤 [전국 웅변] 대학생 정책 스피치 대회',
+    text: '🏆 제15회 전국 대학생 스피치 대회가 본선에 돌입했다. 전국의 심사위원단과 수백 명 청중들 앞에서 차세대 리더로서의 비전과 정치 철학을 포효할 순간이다.',
+    choices: [
+      { label: '호소력 짙은 웅변과 역동적인 제스처로 청중을 매료시킨다', effects: [{ stat: '연설력', delta: 13 }, { stat: '여론', delta: 7 }, { stat: '체력', delta: -6 }] },
+      { label: '방대한 데이터와 정교한 통계 논리로 심사위원을 압도한다', effects: [{ stat: '학식', delta: 11 }, { stat: '연설력', delta: 9 }, { stat: '체력', delta: -5 }] },
+    ],
+  },
+
+  // ── 외교관 후보자 ──
+  {
+    stage: '외교관 후보자',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '📋 [역량 평가] 국립외교원 도서관',
+    text: '📋 국립외교원 2차 역량 평가 필기시험 D-30. 국제정치학, 국제법, 국제경제학까지 서술해야 할 방대한 논제들이 책상 위를 산더미처럼 뒤덮었다.',
+    choices: [
+      { label: '국제기구 다자 협력 및 글로벌 통상 규범 논문을 집중 공략한다', effects: [{ stat: '학식', delta: 14 }, { stat: '체력', delta: -8 }] },
+      { label: '국가 안보 전략 및 국제 분쟁 판례 모의 답안 작성에 몰두한다', effects: [{ stat: '학식', delta: 12 }, { stat: '연설력', delta: 6 }, { stat: '체력', delta: -6 }] },
+    ],
+  },
+  {
+    stage: '외교관 후보자',
+    sceneClass: 'scene-assembly',
+    sceneCaption: '🏛️ [국회 외통위] 정당 외교특위 정책회의',
+    text: '🏛️ 국회 외교통일위원회가 주최하는 해외 외교 시찰에서 정당별 추천 보좌 인턴 배정이 진행된다. 「민생개혁당」 문재호 의원 팀과 「자유미래당」 윤석원 의원 팀 중 한 곳에 참여할 수 있다.',
+    choices: [
+      { label: '「민생개혁당」 문재호 팀에 참여해 한반도 평화 번영 프로세스를 보좌한다', effects: [{ stat: '연설력', delta: 12 }, { stat: '인맥', delta: 8 }, { stat: '성향', delta: -11 }] },
+      { label: '「자유미래당」 윤석원 팀에 참여해 한미 포괄적 전략동맹 강화를 지원한다', effects: [{ stat: '학식', delta: 11 }, { stat: '인맥', delta: 9 }, { stat: '성향', delta: 11 }] },
+    ],
+  },
+  {
+    stage: '외교관 후보자',
+    sceneClass: 'scene-diplomacy',
+    sceneCaption: '✈️ [해외 연수] 주미대사관 연계 인터뷰',
+    text: '✈️ 주미대사관 연계 워싱턴 싱크탱크 파견 후보생 1인을 선발하는 최종 심층 영어 면접이 시작됐다. 최상위 외교 후보생들 간의 치열한 경쟁이다.',
+    choices: [
+      { label: '글로벌 공급망 다변화와 전략 자원 외교의 비전을 설득력 있게 제시한다', effects: [{ stat: '학식', delta: 11 }, { stat: '연설력', delta: 9 }, { stat: '체력', delta: -5 }] },
+      { label: '공공외교 및 문화 소프트파워 네트워크 확장의 중요성을 피력한다', effects: [{ stat: '인맥', delta: 11 }, { stat: '연설력', delta: 9 }, { stat: '체력', delta: -5 }] },
+    ],
+  },
+  {
+    stage: '외교관 후보자',
+    sceneClass: 'scene-diplomacy',
+    sceneCaption: '🤝 [외교 멘토링] 원로 대사 공관 접견실',
+    text: '🤝 과거 김대진 정부 시절 정상회담 의전비서관을 역임한 원로 대사가 비공개 멘토링 만찬을 제안했다. 외교가의 숨겨진 비화와 실전 협상 비결을 전수받을 귀중한 자리다.',
+    choices: [
+      { label: '국가 위기 시 외교적 돌파구를 열어내는 담판 협상 전략을 경청한다', effects: [{ stat: '학식', delta: 10 }, { stat: '인맥', delta: 11 }] },
+      { label: '글로벌 외교가에서의 두터운 인적 네트워크 구축 노하우를 배운다', effects: [{ stat: '인맥', delta: 14 }, { stat: '체력', delta: -4 }] },
+    ],
+  },
+
+  // ── 보좌관 ──
+  {
+    stage: '보좌관',
+    sceneClass: 'scene-assembly',
+    sceneCaption: '🏛️ [국정감사] 국회 본관 정당 TF 회의실',
+    text: '📝 정기 국정감사 개막 전야, 정부 부처의 비리를 입증할 핵심 감사 자료가 확보됐다. 「민생개혁당」 재벌개혁 TF와 「자유미래당」 재정개혁 TF가 각각 대대적인 공세를 준비 중이다.',
+    choices: [
+      { label: '「민생개혁당」 소속 TF로 대기업 불법 내부거래와 하도급 갑질을 집중 폭로한다', effects: [{ stat: '학식', delta: 12 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: -12 }] },
+      { label: '「자유미래당」 소속 TF로 공공기관 방만 경영과 보조금 부정 수급을 고발한다', effects: [{ stat: '학식', delta: 12 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: 12 }] },
+    ],
+  },
+  {
+    stage: '보좌관',
+    sceneClass: 'scene-debate',
+    sceneCaption: '🎙️ [시사 라디오] 여의도 방송 스튜디오',
+    text: '🎙️ 긴급 정국 브리핑을 앞두고 정당 대변인이 급성 질환으로 방송에 불참했다. 수석보좌관인 내가 당의 공식 입장을 대변해 생방송 메이저 시사 라디오에 대타로 긴급 투입된다.',
+    choices: [
+      { label: '「민생개혁당」 대변인 자격으로 서민 복지예산 삭감의 부당성을 날카롭게 성토한다', effects: [{ stat: '연설력', delta: 13 }, { stat: '여론', delta: 10 }, { stat: '성향', delta: -11 }] },
+      { label: '「자유미래당」 대변인 자격으로 과도한 국가채무 증가와 기업 규제를 강력 경고한다', effects: [{ stat: '연설력', delta: 13 }, { stat: '여론', delta: 10 }, { stat: '성향', delta: 11 }] },
+    ],
+  },
+  {
+    stage: '보좌관',
+    sceneClass: 'scene-assembly',
+    sceneCaption: '⚖️ [예산 심사] 국회 예결위 심사실',
+    text: '⚖️ 본회의 예산안 처리를 앞두고, 지역구 숙원 사업인 광역교통 환승센터 예산 배정을 위해 예결위 심사실 복도에서 타 의원실 보좌진들과 치열한 물밑 신경전을 벌인다.',
+    choices: [
+      { label: '정부 기재부 실무진을 밤새 설득해 국비 지원 타당성을 입증한다', effects: [{ stat: '학식', delta: 11 }, { stat: '여론', delta: 8 }, { stat: '체력', delta: -7 }] },
+      { label: '의원실 간 크로스 연대를 결성해 여야 예결소위 합의를 신속히 이끈다', effects: [{ stat: '인맥', delta: 13 }, { stat: '여론', delta: 7 }, { stat: '체력', delta: -6 }] },
+    ],
+  },
+  {
+    stage: '보좌관',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '📰 [언론 공방] 국회 의원회관 기자실',
+    text: '📰 주요 일간지에서 우리 의원실의 합법적 입법 활동을 악의적으로 왜곡한 기사가 보도되어 포털 실시간 검색어를 뒤흔들었다. 의원실 전화가 빗발친다.',
+    choices: [
+      { label: '팩트체크 백서를 즉각 배포하고 언론중재위에 정정보도를 청구한다', effects: [{ stat: '여론', delta: 10 }, { stat: '학식', delta: 8 }] },
+      { label: '국회 정론관에서 긴급 반박 기자회견을 열어 여론의 역풍을 유도한다', effects: [{ stat: '연설력', delta: 11 }, { stat: '여론', delta: 8 }, { stat: '체력', delta: -5 }] },
+    ],
+  },
+
+  // ── 국회의원 ──
+  {
+    stage: '국회의원',
+    sceneClass: 'scene-assembly',
+    sceneCaption: '🏛️ [대정부질문] 국회 본회의장',
+    text: '🏛️ 국회 본회의 대정부질문에서 국무총리를 상대로 15분간의 주질의 마이크를 잡았다. 전국의 지상파 카메라와 여야 의원들이 일제히 숨을 죽이고 지켜본다.',
+    choices: [
+      { label: '「민생개혁당」 추천 질의자로 부자감세 철회와 민생지원금 편성을 강력 촉구한다', effects: [{ stat: '연설력', delta: 14 }, { stat: '여론', delta: 11 }, { stat: '성향', delta: -13 }] },
+      { label: '「자유미래당」 추천 질의자로 재정준칙 법제화와 노동시장 유연화를 강력 압박한다', effects: [{ stat: '연설력', delta: 14 }, { stat: '여론', delta: 11 }, { stat: '성향', delta: 13 }] },
+    ],
+  },
+  {
+    stage: '국회의원',
+    sceneClass: 'scene-general',
+    sceneCaption: '🗳️ [주민 공청회] 지역구 문화센터',
+    text: '🗳️ 지역구 숙원인 첨단 테크노밸리 유치와 도심 생태숲 보존을 두고 주민 비상대책위 300여 명이 의원실 앞 복도까지 몰려와 격렬한 공청회를 요구하고 있다.',
+    choices: [
+      { label: '생태 보전과 주민 건강권을 최우선으로 주민 상생 협의체를 구성한다', effects: [{ stat: '여론', delta: 13 }, { stat: '연설력', delta: 9 }, { stat: '체력', delta: -7 }] },
+      { label: '대기업 투자 유치 설명회를 주최해 일자리 창출과 지역 발전 비전을 호소한다', effects: [{ stat: '인맥', delta: 11 }, { stat: '학식', delta: 10 }, { stat: '체력', delta: -6 }] },
+    ],
+  },
+  {
+    stage: '국회의원',
+    sceneClass: 'scene-diplomacy',
+    sceneCaption: '🌐 [의원 외교] 아시아·태평양 의회 총회장',
+    text: '📡 대한민국 국회 대표단 단장으로 아시아·태평양 의회 연맹 정기총회에 참석했다. 자원 부국 총리가 만찬장에서 다가와 전략적 양국 협력에 대해 조용히 운을 뗀다.',
+    choices: [
+      { label: '핵심 광물 및 에너지 공급망 MOU를 체결하며 실리 국익 외교를 이끈다', effects: [{ stat: '학식', delta: 11 }, { stat: '인맥', delta: 12 }] },
+      { label: '친환경 신재생에너지 및 글로벌 기후 대응 의원 연대를 주도한다', effects: [{ stat: '연설력', delta: 12 }, { stat: '인맥', delta: 11 }] },
+    ],
+  },
+  {
+    stage: '국회의원',
+    sceneClass: 'scene-party',
+    sceneCaption: '🤝 [원내 협상] 국회 귀빈식당 밀실',
+    text: '🤝 핵심 사법개혁 법안 표결을 앞두고 원내 지도부 간의 심야 담판 테이블이 차려졌다. 원로 박정웅계 의원들과 소장파 조민국계 의원들이 서로 다른 정당 노선을 제안한다.',
+    choices: [
+      { label: '「민생개혁당」 노선을 지지하며 검찰 수사권 분산 및 사법개혁을 완성한다', effects: [{ stat: '인맥', delta: 13 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: -12 }] },
+      { label: '「자유미래당」 노선을 지지하며 엄정한 법치주의와 수사기관 독립성을 보장한다', effects: [{ stat: '인맥', delta: 13 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: 12 }] },
+    ],
+  },
+
+  // ── 당대표 ──
+  {
+    stage: '당대표',
+    sceneClass: 'scene-party',
+    sceneCaption: '🎖️ [전당대회] 올림픽공원 전당대회장',
+    text: '🎖️ 총선 공천권을 좌우할 전당대회가 절정으로 치닫고 있다. 노민현계의 평당원 풀뿌리 조직과 박정웅계의 전통 당원 조직이 총집결해 당대표의 확고한 노선을 요구한다.',
+    choices: [
+      { label: '「민생개혁당」의 개혁 깃발을 들고 당원 직접 민주주의를 천명한다', effects: [{ stat: '여론', delta: 14 }, { stat: '인맥', delta: 9 }, { stat: '성향', delta: -13 }] },
+      { label: '「자유미래당」의 전통을 선언하며 보수 원로들과 결속한 통합 리더십을 세운다', effects: [{ stat: '인맥', delta: 14 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: 13 }] },
+    ],
+  },
+  {
+    stage: '당대표',
+    sceneClass: 'scene-debate',
+    sceneCaption: '📺 [당대표 토론] 여의도 스튜디오 토론장',
+    text: '📺 지상파 3사 생중계 여야 당대표 끝장 토론회. 상대 당대표가 사전에 준비한 듯 날카로운 국정 실책 공세와 과거 발언을 집요하게 파고들며 공세를 퍼붓는다.',
+    choices: [
+      { label: '「민생개혁당」 대표로서 양극화 해소와 불평등 타파를 외치며 맞선다', effects: [{ stat: '연설력', delta: 15 }, { stat: '여론', delta: 10 }, { stat: '성향', delta: -13 }] },
+      { label: '「자유미래당」 대표로서 시장 혼란과 포퓰리즘 폐해를 지적하며 맞받아친다', effects: [{ stat: '연설력', delta: 15 }, { stat: '여론', delta: 10 }, { stat: '성향', delta: 13 }] },
+    ],
+  },
+  {
+    stage: '당대표',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '⚖️ [당무 쇄신] 당사 최고위원회의',
+    text: '⚡ 당 총선기획단에서 일부 공천 신청자들의 도덕성 시비가 불거져 언론의 십자포화가 쏟아졌다. 당대표로서 읍참마속의 쇄신 결단이 시급하다.',
+    choices: [
+      { label: '국민 눈높이에 맞춘 엄격한 잣대로 논란 인사를 과감하게 컷오프한다', effects: [{ stat: '여론', delta: 13 }, { stat: '인맥', delta: -6 }, { stat: '체력', delta: -5 }] },
+      { label: '100% 당원 경선에 회부하여 당원들의 손으로 직접 평가받게 한다', effects: [{ stat: '학식', delta: 9 }, { stat: '여론', delta: 8 }, { stat: '인맥', delta: 6 }] },
+    ],
+  },
+  {
+    stage: '당대표',
+    sceneClass: 'scene-party',
+    sceneCaption: '📊 [국가 비전] 당 정책위원회 발표회',
+    text: '📊 당 싱크탱크와 학계 석학들이 1년간 공들여 완성한 국가 5개년 대개혁 비전 보고서가 당대표 테이블에 올랐다. 이 비전이 당의 차기 총선·대선 공식 공약이 된다.',
+    choices: [
+      { label: '「민생개혁당」 강령에 맞춰 토지공개념 강화와 사회연대 복지국가를 선언한다', effects: [{ stat: '학식', delta: 13 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: -14 }] },
+      { label: '「자유미래당」 강령에 맞춰 노동 유연화와 규제 샌드박스 시장경제를 선언한다', effects: [{ stat: '학식', delta: 13 }, { stat: '여론', delta: 9 }, { stat: '성향', delta: 14 }] },
+    ],
+  },
+
+  // ── 대선 후보 ──
+  {
+    stage: '대선 후보',
+    sceneClass: 'scene-debate',
+    sceneCaption: '📢 [대선 TV토론] 상암 DMC 방송센터',
+    text: '📢 제21대 대통령 선거 1차 공식 TV 토론. 1천만 유권자가 지켜보는 가운데 6분간의 대선 주도권 토론이 시작됐다. 상대 후보의 공약 맹점을 허물 절호의 기회다.',
+    choices: [
+      { label: '「민생개혁당」 후보로서 서민과 노동자를 위한 진정한 기본사회 교체를 천명한다', effects: [{ stat: '연설력', delta: 16 }, { stat: '여론', delta: 13 }, { stat: '성향', delta: -15 }] },
+      { label: '「자유미래당」 후보로서 자유와 공정, 튼튼한 안보와 경제 번영의 재건을 천명한다', effects: [{ stat: '연설력', delta: 16 }, { stat: '여론', delta: 13 }, { stat: '성향', delta: 15 }] },
+    ],
+  },
+  {
+    stage: '대선 후보',
+    sceneClass: 'scene-diplomacy',
+    sceneCaption: '🌏 [외신기자회견] 프레스센터 국제회의장',
+    text: '🌏 외신기자클럽 초청 회견에서 미·중 패권 충돌과 한반도 안보 체제에 관한 날카로운 영어 질문이 쏟아졌다. 세계 언론이 대한민국 차기 지도자의 외교적 자질을 평가한다.',
+    choices: [
+      { label: '국익 중심의 자주적 균형 외교와 한반도 종전 평화 체제를 명쾌히 천명한다', effects: [{ stat: '학식', delta: 13 }, { stat: '여론', delta: 11 }] },
+      { label: '전통적 가치 동맹의 확고한 신뢰와 첨단 기술 공급망 협력을 당당히 확약한다', effects: [{ stat: '학식', delta: 13 }, { stat: '인맥', delta: 11 }] },
+    ],
+  },
+  {
+    stage: '대선 후보',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '🗞️ [기자회견] 대선 선대위 브리핑룸',
+    text: '🗞️ 선거 D-10, 사설 정보업체에서 조작된 음성 녹취록과 괴문서를 유포하며 사상 초유의 흑색선전 총공세를 시작했다. 캠프 참모들이 긴급 심야 회의를 소집했다.',
+    choices: [
+      { label: '사법 당국에 즉각 고발하고 팩트체크 증거를 공개하며 정면 돌파한다', effects: [{ stat: '여론', delta: 14 }, { stat: '체력', delta: -7 }] },
+      { label: '대국민 특별 기자회견을 열어 주권자인 국민의 상식과 집단지성에 호소한다', effects: [{ stat: '연설력', delta: 14 }, { stat: '여론', delta: 11 }, { stat: '체력', delta: -6 }] },
+    ],
+  },
+  {
+    stage: '대선 후보',
+    sceneClass: 'scene-election',
+    sceneCaption: '🤝 [후보 단일화] 여의도 모처 심야 회동',
+    text: '🤝 지지율 7%를 쥔 제3지대 유력 후보가 심야 단일화 담판을 제안했다. 대선 승리를 확정 지을 최후의 연립정부 빅텐트 결단이다.',
+    choices: [
+      { label: '「민생개혁당」 중심의 진보·중도 개혁 대통합 연립정부 공동선언을 완성한다', effects: [{ stat: '인맥', delta: 15 }, { stat: '여론', delta: 13 }, { stat: '성향', delta: -15 }] },
+      { label: '「자유미래당」 중심의 자유·보수 대연합 공동정부 합의문에 서명한다', effects: [{ stat: '인맥', delta: 15 }, { stat: '여론', delta: 13 }, { stat: '성향', delta: 15 }] },
+    ],
+  },
+];
+
+// ═══════════════════════════════════════
+// 행동별 다채로운 상황 묘사 풀
+// ═══════════════════════════════════════
+const ACTION_DESCRIPTIONS = {
+  study: [
+    '중앙도서관 열람실에서 새벽까지 정치철학과 헌법 판례집을 탐독했다. 날카로운 학술적 안목이 한층 깊어졌다.',
+    '학술 세미나에서 논리정연한 발제로 교수진과 학우들의 찬사를 받았다. 지적 성취감이 온몸을 채운다.',
+    '역대 정권의 외교 백서와 정책 분석 보고서를 꼼꼼히 대조하며 국가 시스템의 본질을 통찰했다.'
+  ],
+  council: [
+    '학생회 집행부 긴급회의에 참석해 학내 쟁점을 원만하게 조율했다. 다양한 성향의 동료들과 끈끈한 신뢰를 쌓았다.',
+    '단과대 연석회의에서 교섭력을 발휘해 타협점을 이끌어냈다. 학내 마당발로서의 입지가 더욱 확고해졌다.',
+    '동문 선후배들의 밤샘 네트워킹 모임에서 인맥을 넓혔다. 미래의 정치적 동지들이 하나둘 늘어간다.'
+  ],
+  debate: [
+    '교내외 토론 배틀에서 상대의 허점을 송곳처럼 파고들며 청중을 열광시켰다. 연단 위에서의 자신감이 치솟는다.',
+    '시사 쟁점 모의 청문회에서 좌중을 압도하는 호소력 짙은 웅변을 펼쳤다. 박수갈채가 강당에 울려 퍼졌다.',
+    '치열한 설전 끝에 심사위원 만장일치 판정승을 거뒀다. 어떤 반론도 받아칠 수 있는 언변의 날을 세웠다.'
+  ],
+  volunteer: [
+    '지역 복지관을 찾아 주민들의 고충을 묵묵히 경청하고 손을 보탰다. 진심 어린 눈빛이 사람들의 마음에 닿았다.',
+    '지역 청년들과 함께 거리 정화 및 정책 설문 봉사를 펼쳤다. 시민들 사이에 따뜻하고 성실한 평판이 퍼져나간다.',
+    '소외계층 지원 캠페인 현장에서 앞장서 땀을 흘렸다. 대중의 신뢰와 우호적인 여론이 든든하게 축적된다.'
+  ],
+  exercise: [
+    '이른 아침 운동장을 달리며 가쁜 숨을 몰아쉬었다. 강인한 체력과 흔들리지 않는 멘탈이 길러졌다.',
+    '체력단련장에서 강도 높은 트레이닝을 소화했다. 빡빡한 정치 일정을 버텨낼 단단한 기초체력이 붙었다.',
+    '가벼운 조깅과 스트레칭으로 묵은 피로를 말끔히 씻어냈다. 맑아진 머리와 가벼워진 몸으로 기운을 차렸다.'
+  ],
+  rest: [
+    '복잡한 정치와 학업을 완전히 내려놓고 조용한 찻집에서 차분히 재충전했다. 내면의 평온이 회복되었다.',
+    '오롯이 휴식을 취하며 지나온 궤적을 돌아보고 미래를 설계했다. 지쳤던 몸과 마음에 활력이 솟아난다.',
+    '충분한 수면과 휴식을 통해 극심했던 피로를 회복했다. 앞으로 닥칠 격랑을 마주할 힘이 생긴다.'
+  ]
+};
+
+// 기본 행동 선택지 (정당 주최/소속이 아니므로 성향 변동 없음)
+const ACTIONS = [
+  {
+    id: 'study',
+    label: '📖 스터디 참여',
+    desc: '학술 소모임에서 정책과 이론을 깊이 있게 연구한다.',
+    gainStat: '학식',
+    staminaType: 'cost',
+    effectText: '학식 ↑ · 체력 ↓',
+    sceneClass: 'scene-seminar',
+    sceneCaption: '📚 [학술 연구] 중앙도서관 정책 스터디'
+  },
+  {
+    id: 'council',
+    label: '🙋 학생회 활동',
+    desc: '학생회 회의에 참석해 교내외 인사들과 인맥을 다진다.',
+    gainStat: '인맥',
+    staminaType: 'cost',
+    effectText: '인맥 ↑ · 체력 ↓',
+    sceneClass: 'scene-assembly',
+    sceneCaption: '🤝 [학생 자치] 단과대 대표 연석회의'
+  },
+  {
+    id: 'debate',
+    label: '🎤 토론 대회',
+    desc: '공개 토론에 출전해 날카로운 논리로 대중을 휘어잡는다.',
+    gainStat: '연설력',
+    staminaType: 'cost',
+    effectText: '연설력 ↑ · 체력 ↓',
+    sceneClass: 'scene-debate',
+    sceneCaption: '🎤 [설전 토론] 전국 정책 배틀장'
+  },
+  {
+    id: 'volunteer',
+    label: '❤️ 봉사활동',
+    desc: '지역 사회를 직접 발로 뛰며 대중의 신뢰와 민심을 얻는다.',
+    gainStat: '여론',
+    staminaType: 'cost',
+    effectText: '여론 ↑ · 체력 ↓',
+    sceneClass: 'scene-general',
+    sceneCaption: '❤️ [민생 현장] 복지관 주민 봉사'
+  },
+  {
+    id: 'exercise',
+    label: '💪 체력 단련',
+    desc: '엄격한 규율과 운동으로 험난한 정치 행보를 대비한다.',
+    gainStat: '체력',
+    staminaType: 'gain',
+    effectText: '체력 ↑↑',
+    sceneClass: 'scene-general',
+    sceneCaption: '💪 [기초 체력] 아침 조깅과 트레이닝'
+  },
+  {
+    id: 'rest',
+    label: '😴 휴식',
+    desc: '모든 외부 일정을 비우고 심신을 편안히 가다듬는다.',
+    gainStat: null,
+    staminaType: 'gain',
+    effectText: '체력 ↑↑',
+    sceneClass: 'scene-general',
+    sceneCaption: '☕ [심신 휴식] 차분한 재충전'
+  },
+];
+
+// ═══════════════════════════════════════
+// 전역 상태 객체
+// 성향: 음수(-100~-1)=진보, 양수(1~100)=보수 (0은 존재 불가)
+// ═══════════════════════════════════════
+const state = {
+  playerName: '김정치',
+  turn: 1,
+  stageIndex: 0,
+  stages: ['학부생', '외교관 후보자', '보좌관', '국회의원', '당대표', '대선 후보', '대통령'],
+  stats: { 학식: 20, 인맥: 20, 연설력: 20, 여론: 20, 체력: 20, 성향: -12 },
+  currentChoices: [],
+  lastResult: null,
+  currentEvent: null,
+  examPending: false,
+  ended: false,
+};
+
+// ═══════════════════════════════════════
+// 성향 스탯 조정 함수 (반드시 한쪽으로 치우침)
+// ═══════════════════════════════════════
+function adjustIdeology(delta) {
+  let val = state.stats['성향'] + delta;
+  // -100 ~ 100 범위 제한
+  val = Math.max(-100, Math.min(100, val));
+  // 0인 경우 반드시 한쪽으로 치우치게 만듦 (이전 부호 혹은 delta 방향)
+  if (val === 0) {
+    val = delta >= 0 ? 5 : -5;
+  }
+  state.stats['성향'] = val;
+}
+
+// ═══════════════════════════════════════
+// localStorage 저장 / 불러오기
+// ═══════════════════════════════════════
+const SAVE_KEY = 'politicsGame_save_v2';
+const BEST_KEY = 'politicsGame_best';
+
+function saveGame() {
+  if (state.ended) return;
+  const snapshot = {
+    playerName: state.playerName,
+    turn: state.turn,
+    stageIndex: state.stageIndex,
+    stats: { ...state.stats },
+    examPending: state.examPending,
+  };
+  localStorage.setItem(SAVE_KEY, JSON.stringify(snapshot));
+}
+
+function loadGame() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return false;
+    const snap = JSON.parse(raw);
+    state.playerName  = snap.playerName || '김정치';
+    state.turn        = snap.turn;
+    state.stageIndex  = snap.stageIndex;
+    state.stats       = snap.stats;
+    if (state.stats['성향'] === undefined) state.stats['성향'] = -10;
+    state.examPending = snap.examPending || false;
+    state.lastResult  = null;
+    return true;
+  } catch (e) { return false; }
+}
+
+function clearSave() { localStorage.removeItem(SAVE_KEY); }
+
+function getBestTurn() {
+  const v = parseInt(localStorage.getItem(BEST_KEY), 10);
+  return isNaN(v) ? null : v;
+}
+
+function updateBest(turn) {
+  const prev = getBestTurn();
+  if (prev === null || turn < prev) {
+    localStorage.setItem(BEST_KEY, String(turn));
+    return true;
+  }
+  return false;
+}
+
+// ═══════════════════════════════════════
+// 플레이어 이름 입력 모달 처리
+// ═══════════════════════════════════════
+function openNameModal() {
+  const modal = document.getElementById('name-modal');
+  modal.className = 'show';
+  const inp = document.getElementById('player-name-input');
+  inp.value = state.playerName || '김정치';
+  inp.focus();
+}
+
+function submitPlayerName() {
+  const inp = document.getElementById('player-name-input');
+  const name = inp.value.trim();
+  state.playerName = name.length > 0 ? name : '김정치';
+  document.getElementById('name-modal').className = '';
+  saveGame();
+  render();
+}
+
+// ═══════════════════════════════════════
+// 엔딩 표시
+// ═══════════════════════════════════════
+function showEnding(type) {
+  state.ended = true;
+  clearSave();
+
+  const overlay = document.getElementById('ending-overlay');
+  const isProg = state.stats['성향'] < 0;
+  const ideoTitle = isProg ? `진보 성향 (${Math.abs(state.stats['성향'])}%)` : `보수 성향 (${state.stats['성향']}%)`;
+
+  const statNames = [
+    ['📖', '학식'], ['🤝', '인맥'], ['🎤', '연설력'], ['📣', '여론'], ['💪', '체력'],
+  ];
+
+  let statGridHtml = statNames.map(([em, name]) =>
+    `<div class="ending-stat-cell">${em}<strong>${state.stats[name]}</strong>${name}</div>`
+  ).join('');
+
+  statGridHtml += `<div class="ending-stat-cell" style="grid-column: span 5; margin-top: 4px;">⚖️ <strong>${ideoTitle}</strong>정치적 노선</div>`;
+  document.getElementById('ending-stats').innerHTML = statGridHtml;
+
+  let bestMsg = '';
+  if (type === 'win') {
+    const isNew = updateBest(state.turn);
+    const best  = getBestTurn();
+    bestMsg = isNew
+      ? `🏆 신기록 달성! 최고 기록 갱신: ${best}턴`
+      : `🏆 현재 최고 기록: ${best}턴`;
+
+    overlay.className = 'show win';
+    document.getElementById('ending-emoji').textContent  = '🎉';
+    document.getElementById('ending-title').textContent  = `${state.playerName} 님이 제21대 대통령에 당선되었습니다!`;
+    document.getElementById('ending-body').innerHTML     =
+      `축하합니다! <strong>${state.playerName}</strong> 님은 <strong>${state.turn}턴</strong> 만에 학부생에서 출발해 확고한 <strong>${ideoTitle}</strong>의 지도자로 청와대에 입성했습니다.<br>` +
+      `국민의 절대적인 신임 속에 당신의 정치 철학이 담긴 새 역사가 시작됩니다.`;
+  } else {
+    overlay.className = 'show lose';
+    document.getElementById('ending-emoji').textContent  = '💔';
+    document.getElementById('ending-title').textContent  = `${state.playerName} 님의 정치 생명이 종료되었습니다`;
+    document.getElementById('ending-body').innerHTML     =
+      `여론이 0으로 곤두박질치며 국민의 신뢰를 완전히 상실했습니다.<br>` +
+      `<strong>${state.playerName}</strong> 님이 <strong>${state.turn}턴</strong> 동안 치열하게 펼쳐온 정계 도전이 여기서 막을 내립니다.`;
+    bestMsg = getBestTurn() ? `🏆 최고 기록: ${getBestTurn()}턴` : '';
+  }
+
+  document.getElementById('ending-best-msg').textContent = bestMsg;
+  renderBestRecord();
+}
+
+// ═══════════════════════════════════════
+// 다시 시작
+// ═══════════════════════════════════════
+function restartGame() {
+  clearSave();
+  state.turn         = 1;
+  state.stageIndex   = 0;
+  state.stats        = { 학식: 20, 인맥: 20, 연설력: 20, 여론: 20, 체력: 20, 성향: -12 };
+  state.currentChoices = [];
+  state.lastResult   = null;
+  state.currentEvent = null;
+  state.examPending  = false;
+  state.ended        = false;
+  document.getElementById('ending-overlay').className = '';
+  openNameModal();
+  state.currentEvent = rollEvent();
+  if (!state.currentEvent) generateChoices();
+  render();
+}
+
+function renderBestRecord() {
+  const best = getBestTurn();
+  document.getElementById('best-turn').textContent = best ? best + '턴' : '-';
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function clamp(v) { return Math.max(0, Math.min(100, v)); }
+
+function stageEmoji(stage) {
+  const map = {
+    '학부생':      '📚', '외교관 후보자': '🌐', '보좌관':   '🗂️',
+    '국회의원':    '🏛️', '당대표':       '🎖️', '대선 후보': '📢', '대통령': '🇰🇷',
+  };
+  return map[stage] || '⭐';
+}
+
+// ═══════════════════════════════════════
+// 시간 경과 프로그레스 바 실행기
+// ═══════════════════════════════════════
+let isProcessing = false;
+
+function runWithProgress(title, icon, onComplete) {
+  if (isProcessing) return;
+  isProcessing = true;
+
+  document.querySelectorAll('.choice-btn').forEach(b => b.disabled = true);
+
+  const wrap   = document.getElementById('time-progress-wrap');
+  const fill   = document.getElementById('time-fill');
+  const pct    = document.getElementById('time-pct');
+  const label  = document.getElementById('time-label');
+  const iconEl = document.getElementById('time-icon');
+
+  wrap.style.display = 'flex';
+  fill.style.width = '0%';
+  pct.textContent = '0%';
+  label.textContent = title;
+  iconEl.textContent = icon || '⏳';
+
+  const duration = 800;
+  const start = performance.now();
+
+  function step(now) {
+    const elapsed = now - start;
+    const progress = Math.min(1, elapsed / duration);
+    const pVal = Math.floor(progress * 100);
+    fill.style.width = pVal + '%';
+    pct.textContent = pVal + '%';
+
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      setTimeout(() => {
+        wrap.style.display = 'none';
+        isProcessing = false;
+        onComplete();
+      }, 100);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
+// ═══════════════════════════════════════
+// 저해상도 씬 도트 일러스트 갱신 함수 (상황 텍스트 바로 아래)
+// ═══════════════════════════════════════
+function updateSceneDisplay(sceneClass, caption) {
+  const graphicEl = document.getElementById('scene-graphic');
+  const captionEl = document.getElementById('scene-caption');
+  if (!graphicEl || !captionEl) return;
+  graphicEl.className = 'pixel-scene-graphic ' + (sceneClass || 'scene-seminar');
+  captionEl.innerHTML = caption || '📚 [정무 현장] 브리핑';
+}
+
+function updateEventDot(dotType, dotTag) {
+  // 하위 호환 유지
+}
+
+// ═══════════════════════════════════════
+// 도트 캐릭터 및 씬 카드 갱신
+// ═══════════════════════════════════════
+function updateDotCharacter() {
+  const roleEl = document.getElementById('dot-role');
+  const statusEl = document.getElementById('dot-status');
+  const moodEl = document.getElementById('dot-mood');
+  const stage = state.stages[state.stageIndex];
+
+  const isProg = state.stats['성향'] < 0;
+  const ideoWord = isProg ? '진보' : '보수';
+
+  const roleTitles = [
+    `📚 ${state.playerName} (한빛대 정외과 신입생)`,
+    `🌐 ${state.playerName} (외교관후보생 / ${ideoWord} 외교)`,
+    `🗂️ ${state.playerName} (의원실 정책 수석보좌관)`,
+    `🏛️ ${state.playerName} 의원 (제22대 국회의원)`,
+    `🎖️ ${state.playerName} 대표 (${ideoWord} 정당 대표)`,
+    `📢 ${state.playerName} 후보 (유력 대권 주자)`,
+    `🇰🇷 ${state.playerName} 대통령 (국가원수)`
+  ];
+  roleEl.textContent = roleTitles[state.stageIndex] || `${stage} ${state.playerName}`;
+
+  // 감정 이모지 및 상태 문구
+  if (state.examPending) {
+    moodEl.textContent = '🎯';
+    statusEl.textContent = `${state.playerName} 후보자, 중대한 진급 심사대 앞에 섰습니다. 결단의 순간입니다.`;
+  } else if (state.currentEvent) {
+    moodEl.textContent = '⚡';
+    statusEl.textContent = `긴급 정국 현안이 발생했습니다! ${ideoWord} 성향의 확고한 결단이 요구됩니다.`;
+  } else if (state.lastResult && state.lastResult.forcedRest) {
+    moodEl.textContent = '😵';
+    statusEl.textContent = '극심한 과로로 쓰러졌습니다. 강제로 휴식을 취하며 체력을 보충했습니다.';
+  } else if (state.lastResult && state.lastResult.isExam && state.lastResult.pass) {
+    moodEl.textContent = '✨';
+    statusEl.textContent = '진급 심사를 당당히 통과했습니다! 더 높은 대권의 무대로 전진합니다.';
+  } else if (state.lastResult && state.lastResult.isExam && !state.lastResult.pass) {
+    moodEl.textContent = '💧';
+    statusEl.textContent = '심사에서 쓴잔을 마셨습니다. 여론을 재정비하고 심기일전합니다.';
+  } else if (state.stats['여론'] <= 20) {
+    moodEl.textContent = '😰';
+    statusEl.textContent = '여론이 극도로 위태롭습니다! 민심을 되찾지 못하면 정치 생명이 끝납니다.';
+  } else {
+    moodEl.textContent = '💭';
+    statusEl.textContent = `${state.turn}턴 진행 중. [${ideoWord} 성향]으로 확고한 정치적 지지층을 결집하고 있습니다.`;
+  }
+}
+
+// ═══════════════════════════════════════
+// 성향 스탯 바 렌더링
+// ═══════════════════════════════════════
+function renderIdeology() {
+  const ideo = state.stats['성향'];
+  const badgeEl = document.getElementById('badge-성향');
+  const trackProg = document.getElementById('track-prog');
+  const trackCons = document.getElementById('track-cons');
+
+  // -100(극진보) ~ +100(극보수) -> 진보 비율(0~100%), 보수 비율(0~100%)
+  // ideo = -50 -> progWidth = 75%, consWidth = 25%
+  // ideo = +40 -> progWidth = 30%, consWidth = 70%
+  const progPct = Math.round(50 - (ideo / 2));
+  const consPct = 100 - progPct;
+
+  trackProg.style.width = progPct + '%';
+  trackCons.style.width = consPct + '%';
+
+  if (ideo < 0) {
+    const val = Math.abs(ideo);
+    let title = '진보';
+    if (val >= 60) title = '선명 진보';
+    else if (val >= 30) title = '개혁 진보';
+    else title = '온건 진보';
+    badgeEl.className = 'ideology-badge badge-prog';
+    badgeEl.textContent = `${title} ${val}%`;
+  } else {
+    const val = ideo;
+    let title = '보수';
+    if (val >= 60) title = '정통 보수';
+    else if (val >= 30) title = '자유 보수';
+    else title = '개혁 보수';
+    badgeEl.className = 'ideology-badge badge-cons';
+    badgeEl.textContent = `${title} ${val}%`;
+  }
+}
+
+// ═══════════════════════════════════════
+// 진급 조건 체크
+// ═══════════════════════════════════════
+function checkPromotion() {
+  if (state.stageIndex >= STAGES.length - 1) return false;
+  const cond = STAGES[state.stageIndex];
+  const sum  = state.stats['학식'] + state.stats['인맥'] + state.stats['연설력'] + state.stats['여론'] + state.stats['체력'];
+  return state.turn >= cond.minTurn && sum >= cond.statSum;
+}
+
+// ═══════════════════════════════════════
+// 진급 심사 실행 (프로그레스 바 연동)
+// ═══════════════════════════════════════
+function runExam() {
+  runWithProgress(`${state.playerName} 후보자에 대한 진급 심사가 엄정히 진행 중입니다...`, '🏅', () => {
+    const cond  = STAGES[state.stageIndex];
+    const sum   = state.stats['학식'] + state.stats['인맥'] + state.stats['연설력'] + state.stats['여론'] + state.stats['체력'];
+    const bonus = randInt(0, 20);
+    const score = sum + bonus;
+    const pass  = score >= cond.threshold;
+
+    if (pass) {
+      state.stageIndex++;
+      state.examPending = false;
+      state.lastResult = { isExam: true, pass: true, score, threshold: cond.threshold, bonus, newStage: state.stages[state.stageIndex] };
+      state.turn++;
+      saveGame();
+
+      if (state.stageIndex === state.stages.length - 1) {
+        render();
+        showEnding('win');
+        return;
+      }
+    } else {
+      state.stats['여론'] = clamp(state.stats['여론'] - 10);
+      state.examPending = false;
+      state.lastResult = { isExam: true, pass: false, score, threshold: cond.threshold, bonus };
+      state.turn++;
+      saveGame();
+
+      if (state.stats['여론'] <= 0) {
+        render();
+        showEnding('lose');
+        return;
+      }
+    }
+
+    state.currentEvent = rollEvent();
+    if (!state.currentEvent) generateChoices();
+    render();
+  });
+}
+
+// ═══════════════════════════════════════
+// 이벤트 추첨
+// ═══════════════════════════════════════
+function rollEvent() {
+  if (Math.random() > 0.3) return null;
+  const stage = state.stages[state.stageIndex];
+  const pool = EVENTS.filter(e => e.stage === stage);
+  if (!pool.length) return null;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ═══════════════════════════════════════
+// 이벤트 선택 처리 (성향 변동 포함)
+// ═══════════════════════════════════════
+function chooseEvent(idx) {
+  const ev = state.currentEvent;
+  const chosen = ev.choices[idx];
+
+  runWithProgress(`결단이 정국에 파장을 일으키는 중: "${chosen.label.slice(0, 16)}..."`, '⚡', () => {
+    const deltas = {};
+
+    for (const eff of chosen.effects) {
+      if (eff.stat === '성향') {
+        adjustIdeology(eff.delta);
+        deltas['성향'] = eff.delta;
+      } else {
+        deltas[eff.stat] = (deltas[eff.stat] || 0) + eff.delta;
+        state.stats[eff.stat] = clamp(state.stats[eff.stat] + eff.delta);
+      }
+    }
+
+    let forcedRest = false;
+    if (state.stats['체력'] <= 0) {
+      state.stats['체력'] = 30;
+      forcedRest = true;
+    }
+
+    state.lastResult = {
+      isEvent: true,
+      eventText: ev.text,
+      choiceLabel: chosen.label,
+      deltas,
+      forcedRest,
+      sceneClass: ev.sceneClass,
+      sceneCaption: ev.sceneCaption
+    };
+    state.currentEvent = null;
+    state.turn++;
+    saveGame();
+
+    if (state.stats['여론'] <= 0) {
+      render();
+      showEnding('lose');
+      return;
+    }
+
+    if (checkPromotion()) { state.examPending = true; render(); return; }
+    state.currentEvent = rollEvent();
+    if (!state.currentEvent) generateChoices();
+    render();
+  });
+}
+
+// ═══════════════════════════════════════
+// 행동 선택지 3개 무작위 생성
+// ═══════════════════════════════════════
+function generateChoices() {
+  const shuffled = [...ACTIONS].sort(() => Math.random() - 0.5);
+  state.currentChoices = shuffled.slice(0, 3);
+}
+
+// ═══════════════════════════════════════
+// 행동 선택 처리
+// ═══════════════════════════════════════
+function choose(idx) {
+  const action = state.currentChoices[idx];
+
+  runWithProgress(`시간이 흐르고 행동의 결과가 나타나는 중: [${action.label}]`, '⏳', () => {
+    const deltas = {};
+
+    if (action.staminaType === 'gain') {
+      const gain = randInt(5, 10);
+      deltas['체력'] = gain;
+      state.stats['체력'] = clamp(state.stats['체력'] + gain);
+    } else {
+      const gain = randInt(5, 10);
+      deltas[action.gainStat] = gain;
+      deltas['체력'] = -5;
+      state.stats[action.gainStat] = clamp(state.stats[action.gainStat] + gain);
+      state.stats['체력'] = clamp(state.stats['체력'] - 5);
+    }
+
+    if (action.ideologyShift) {
+      adjustIdeology(action.ideologyShift);
+      deltas['성향'] = action.ideologyShift;
+    }
+
+    let forcedRest = false;
+    if (state.stats['체력'] <= 0) {
+      state.stats['체력'] = 30;
+      forcedRest = true;
+    }
+
+    const descPool = ACTION_DESCRIPTIONS[action.id] || [action.desc];
+    const pickedDesc = descPool[Math.floor(Math.random() * descPool.length)];
+
+    state.lastResult = {
+      action: { ...action, desc: pickedDesc },
+      deltas,
+      forcedRest,
+      sceneClass: action.sceneClass,
+      sceneCaption: action.sceneCaption
+    };
+    state.turn++;
+    saveGame();
+
+    if (state.stats['여론'] <= 0) {
+      render();
+      showEnding('lose');
+      return;
+    }
+
+    if (checkPromotion()) { state.examPending = true; render(); return; }
+    state.currentEvent = rollEvent();
+    if (!state.currentEvent) generateChoices();
+    render();
+  });
+}
+
+// ═══════════════════════════════════════
+// 렌더
+// ═══════════════════════════════════════
+function render() {
+  const stage = state.stages[state.stageIndex];
+
+  // 배경 단계 색조
+  document.body.className = 'stage-' + state.stageIndex;
+
+  // 헤더
+  document.getElementById('header-name').textContent = state.playerName || '김정치';
+  document.getElementById('turn-num').textContent = state.turn;
+  document.getElementById('stage-badge').textContent = stageEmoji(stage) + ' ' + stage;
+  document.getElementById('event-tag').textContent = '📅 ' + state.turn + '턴 — ' + stage;
+  document.getElementById('event-tag').className =
+    'event-tag' + (state.examPending ? ' is-event' : state.currentEvent ? ' is-event' : '');
+
+  // 도트 캐릭터 및 씬 갱신
+  updateDotCharacter();
+
+  // 저해상도 씬 도트 일러스트 갱신 (상황 텍스트 바로 아래)
+  if (state.examPending) {
+    updateSceneDisplay('scene-assembly', '🏅 [진급 심사] 국회 인사청문 및 역량 검증');
+  } else if (state.currentEvent) {
+    updateSceneDisplay(state.currentEvent.sceneClass || 'scene-seminar', state.currentEvent.sceneCaption || '⚡ [정국 현안] ' + state.currentEvent.stage);
+  } else if (state.lastResult && state.lastResult.isExam) {
+    updateSceneDisplay('scene-assembly', state.lastResult.pass ? '🎉 [심사 통과] 신규 직급 임명식' : '❌ [심사 재도전] 정계 재정비');
+  } else if (state.lastResult && state.lastResult.isEvent) {
+    updateSceneDisplay(state.lastResult.sceneClass || 'scene-seminar', state.lastResult.sceneCaption || '📌 [사건 결과] 정국 재편');
+  } else if (state.lastResult && state.lastResult.action) {
+    updateSceneDisplay(state.lastResult.action.sceneClass || 'scene-general', state.lastResult.action.sceneCaption || '📋 [일반 활동] ' + state.lastResult.action.label);
+  } else {
+    updateSceneDisplay('scene-seminar', '📚 [학술 연구] 조민국 교수 연구실');
+  }
+
+  // 성향 스탯 바 렌더링
+  renderIdeology();
+
+  // 상황 텍스트
+  const sitEl = document.getElementById('situation-text');
+  if (!state.lastResult) {
+    sitEl.innerHTML =
+      `드디어 <strong>한빛대학교 정치외교학과</strong>의 교정을 밟았다.<br>` +
+      `강의실 칠판에 크게 적힌 글귀 — <strong>"정치란 무엇인가?"</strong><br>` +
+      `<strong>${state.playerName}</strong> 님, 수많은 정치가를 배출한 이곳에서 청와대를 향한 위대한 여정이 시작됩니다.<br><br>` +
+      `첫 발걸음으로 어떤 활동에 집중하겠습니까?`;
+  } else if (state.lastResult.isExam) {
+    const r = state.lastResult;
+    if (r.pass) {
+      sitEl.innerHTML =
+        `<span class="promote-msg">🎉 ${state.playerName} 님, 진급 심사 최종 합격!</span><br>` +
+        `취득 점수 <strong>${r.score}점</strong> (기준치 ${r.threshold}점, 행운 보정 +${r.bonus})<br><br>` +
+        `각계의 지지와 찬사 속에 <strong>[${r.newStage}]</strong>(으)로 당당히 도약했습니다! 한층 더 거대한 권력의 무대가 펼쳐집니다.`;
+    } else {
+      sitEl.innerHTML =
+        `<span class="demote-msg">❌ 진급 심사 고배</span><br>` +
+        `취득 점수 <strong>${r.score}점</strong> (기준치 ${r.threshold}점, 행운 보정 +${r.bonus})<br><br>` +
+        `정계의 냉혹한 시선에 <strong>여론이 10 감소</strong>했습니다. 세력을 재정비하고 다음 기회를 노리십시오.`;
+    }
+  } else if (state.examPending) {
+    const cond = STAGES[state.stageIndex];
+    const sum  = state.stats['학식'] + state.stats['인맥'] + state.stats['연설력'] + state.stats['여론'] + state.stats['체력'];
+    sitEl.innerHTML =
+      `🔔 <strong>[${stage}] 진급 심사 자격을 획득했습니다!</strong><br><br>` +
+      `현재 ${state.playerName} 님의 5대 능력치 합산은 <strong>${sum}</strong> (필요 기준 ${cond.statSum})입니다.<br>` +
+      `지금 심사에 도전하여 다음 단계로 전진하시겠습니까? 운과 역량의 시험대입니다.`;
+  } else if (state.lastResult.isEvent) {
+    sitEl.innerHTML =
+      `📌 <em>"${state.lastResult.eventText}"</em><br><br>` +
+      `<strong>👉 ${state.playerName}의 결단:</strong> ${state.lastResult.choiceLabel}<br><br>` +
+      `치열한 파장이 지나가고 정국이 재편되었습니다. 다음 행보를 선택하십시오.`;
+  } else {
+    sitEl.innerHTML = state.lastResult.action.desc + '<br><br>이제 다음 턴의 행보를 선택하세요.';
+  }
+
+  // 결과 델타 블록
+  const resultArea = document.getElementById('result-area');
+  if (state.lastResult && !state.lastResult.isExam && !state.examPending) {
+    const { deltas, forcedRest } = state.lastResult;
+    const deltaItems = Object.entries(deltas).map(([stat, d]) => {
+      if (stat === '성향') {
+        const sign = d < 0 ? `진보 ${Math.abs(d)}% ↑` : `보수 ${d}% ↑`;
+        const cls = d < 0 ? 'delta-pos' : 'delta-neg';
+        return `<span class="${cls}">⚖️ 성향: ${sign}</span>`;
+      }
+      const sign = d >= 0 ? '+' : '';
+      const cls  = d >= 0 ? 'delta-pos' : 'delta-neg';
+      return `<span class="${cls}">${stat} ${sign}${d}</span>`;
+    }).join('');
+
+    let html = `
+      <div class="result-block">
+        <div class="result-title">📊 지난 행동 결과 수치 변동</div>
+        <div class="delta-list">${deltaItems}</div>`;
+
+    if (forcedRest) {
+      html += `<div class="forced-rest-msg">😵 무리한 일정으로 과로해 쓰러졌습니다! 의료진의 처방으로 하루를 쉬었습니다. <strong>체력 +30 회복</strong></div>`;
+    }
+    html += `</div>`;
+    resultArea.innerHTML = html;
+  } else {
+    resultArea.innerHTML = '';
+  }
+
+  // 5대 기본 능력치 바
+  const basicStats = ['학식', '인맥', '연설력', '여론', '체력'];
+  for (const key of basicStats) {
+    const clamped = clamp(state.stats[key]);
+    document.getElementById('val-' + key).textContent = clamped;
+    document.getElementById('bar-' + key).style.width = clamped + '%';
+  }
+
+  // 선택 버튼 렌더링
+  const choicesEl = document.getElementById('choices');
+  choicesEl.innerHTML = '';
+
+  function removeBanner(id) { const b = document.getElementById(id); if (b) b.remove(); }
+  function addBanner(id, cls, text) {
+    if (!document.getElementById(id)) {
+      const b = document.createElement('div');
+      b.id = id; b.className = cls; b.textContent = text;
+      document.getElementById('situation-box').insertBefore(b, document.getElementById('event-tag'));
+    }
+  }
+
+  if (state.examPending) {
+    choicesEl.className = 'exam-mode';
+    removeBanner('event-banner');
+    addBanner('exam-banner', 'exam-banner', '🏅 국가적 진급 심사 개시');
+
+    const makeExamBtn = (label, effect, onclick) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `<div class="choice-num">결단</div><div class="choice-text">${label}</div><div class="choice-effect">${effect}</div>`;
+      btn.onclick = onclick;
+      choicesEl.appendChild(btn);
+    };
+    makeExamBtn('🎯 지금 진급 심사에 도전한다', '5대 능력치 합산 + 주사위 무작위 보정(0~20)으로 당락 판정', () => runExam());
+    makeExamBtn('📚 더 준비하고 다음 기회에 도전한다', '심사를 유보하고 추가 수련을 위해 일반 턴 진행', () => {
+      runWithProgress('내실을 다지며 다음 기회를 준비합니다...', '📚', () => {
+        state.examPending = false;
+        state.currentEvent = rollEvent();
+        if (!state.currentEvent) generateChoices();
+        render();
+      });
+    });
+
+  } else if (state.currentEvent) {
+    choicesEl.className = 'event-mode';
+    removeBanner('exam-banner');
+    addBanner('event-banner', 'event-banner', '⚡ 돌발 정국 사건 발생!');
+    const ev = state.currentEvent;
+    sitEl.innerHTML = '<strong>' + ev.text + '</strong><br><br>어떤 결단을 내리시겠습니까?';
+
+    const evNums = ['①', '②'];
+    ev.choices.forEach((ch, i) => {
+      const effectSummary = ch.effects.map(e => {
+        if (e.stat === '성향') {
+          return e.delta < 0 ? `진보 ${Math.abs(e.delta)}%` : `보수 ${e.delta}%`;
+        }
+        const sign = e.delta >= 0 ? '+' : '';
+        return e.stat + ' ' + sign + e.delta;
+      }).join(' · ');
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `
+        <div class="choice-num">선택 ${evNums[i]}</div>
+        <div class="choice-text">${ch.label}</div>
+        <div class="choice-effect">${effectSummary}</div>`;
+      btn.onclick = () => chooseEvent(i);
+      choicesEl.appendChild(btn);
+    });
+
+  } else {
+    choicesEl.className = '';
+    removeBanner('event-banner');
+    removeBanner('exam-banner');
+
+    const nums = ['①', '②', '③'];
+    state.currentChoices.forEach((action, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = `
+        <div class="choice-num">행동 ${nums[i]}</div>
+        <div class="choice-text">${action.label}</div>
+        <div class="choice-effect">${action.effectText}</div>`;
+      btn.onclick = () => choose(i);
+      choicesEl.appendChild(btn);
+    });
+  }
+}
+
+// ═══════════════════════════════════════
+// 초기화 및 게임 시작
+// ═══════════════════════════════════════
+const hasSaved = loadGame();
+if (!hasSaved) {
+  openNameModal();
+  state.currentEvent = rollEvent();
+  if (!state.currentEvent) generateChoices();
+} else {
+  if (!state.examPending) {
+    state.currentEvent = rollEvent();
+    if (!state.currentEvent) generateChoices();
+  }
+}
+renderBestRecord();
+render();
+</script>
+</body>
+</html>
